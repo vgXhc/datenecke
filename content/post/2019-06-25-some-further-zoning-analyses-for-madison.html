@@ -13,7 +13,7 @@ tags:
 
 
 
-<p>I got some good feedback after posting my article on Madison’s zoning restriction on Facebook and Reddit, prompting some additional analyses.</p>
+<p>I got some good feedback after posting my article <a href="https://vgxhc.github.io/madison_single_family_housing/">on Madison’s zoning restrictions</a> on Facebook and Reddit, prompting some additional analyses.</p>
 <div id="why-do-you-look-only-at-residentially-zoned-land" class="section level1">
 <h1>Why do you look only at residentially zoned land?</h1>
 <p>Several people pointed out that comparing the zoning districts that only allow detached single-family homes (SFR) to all <em>residential</em> zoning districts may be misleading. In many cities the densest parts are not in residential zoning districts but in downtown areas zoned for mixed use. I think that’s a fair point, but it was the original NYT article that chose only residential areas as the comparator, and I wanted to make Madison comparable to the other cities in the NYT analysis.</p>
@@ -44,17 +44,13 @@ res_sfr/(total-other_area)</code></pre>
 <div id="is-there-a-correlation-between-the-percentage-of-sfr-zoning-and-overall-density" class="section level1">
 <h1>Is there a correlation between the percentage of SFR zoning and overall density?</h1>
 <p>It’s a good question: Does the metric the NYT used actually have an association with overall density of a city? (Note that even if there is a correlation, this absolutely doesn’t mean there is a causal connection! There are many, many factors that impact a city’s overall density.)</p>
-<p>There are few data points to work with. I retrieved density information for all the NYT cities and Madison from Wikipedia:</p>
+<p>There are few data points to work with. I retrieved density information for all cities in the NYT article and Madison from Wikipedia:</p>
 <pre class="r"><code>dens_zon &lt;- read_csv(&quot;data/density_zoning.csv&quot;)</code></pre>
 <p>Let’s see what the overall correlation is:</p>
 <pre class="r"><code> dens_zon %&gt;% 
    spread(Measure, Value) %&gt;%
    summarize(cor(density, sfr))</code></pre>
-<<<<<<< HEAD
 <p>Hm, -0.885. That’s a very, very high correlation. But it’s always good to look at your data points in a scatterplot to see what’s actually going on:</p>
-=======
-<p>Hm, -0.885. That’s a very, very strong correlation. But it’s always good to look at your data points in a scatterplot:</p>
->>>>>>> 0b339d451adba958c37f9ae2fe7b07e3ca5bc210
 <pre class="r"><code> dens_zon %&gt;% 
    spread(Measure, Value) %&gt;%
    ggplot(aes(sfr, density, label = City)) +
@@ -64,11 +60,20 @@ res_sfr/(total-other_area)</code></pre>
    scale_x_continuous(expand = c(0, 0.2)) +
    xlab(&quot;Proportion detached single family zoning to all residential zoning&quot;) +
    ylab(&quot;Overall density (population/sq mi)&quot;)</code></pre>
-<blockquote>
-<h1 id="lets-take-out-nyc">let’s take out NYC</h1>
-<p>dens_zon %&gt;% + spread(Measure, Value) %&gt;% + filter(City != “New York”) %&gt;% + summarize(cor(density, sfr)) # A tibble: 1 x 1 <code>cor(density, sfr)</code> <dbl> 1 -0.693</p>
-<h1 id="lets-also-take-out-dc">let’s also take out DC</h1>
-<p>dens_zon %&gt;% + spread(Measure, Value) %&gt;% + filter(City != “New York” &amp; City != “Washington”) %&gt;% + summarize(cor(density, sfr)) # A tibble: 1 x 1 <code>cor(density, sfr)</code> <dbl> 1 -0.366</p>
-</blockquote>
-<p>and then created a scatterplot.</p>
+<div class="figure">
+<img src="/post/Rplot.svg" alt="Scatterplot of overall density and percent single family zoning" />
+<p class="caption">Scatterplot of overall density and percent single family zoning</p>
+</div>
+<p>Okay, New York is clearly way out there. Let’s exclude NYC and do the correlation again:</p>
+<pre class="r"><code> dens_zon %&gt;% 
+   spread(Measure, Value) %&gt;%
+   filter(City != &quot;New York&quot;) %&gt;%
+   summarize(cor(density, sfr))</code></pre>
+<p>That gets us a correlation of -0.69. Much lower, but still pretty high. Is DC also an outlier?</p>
+<pre class="r"><code> dens_zon %&gt;% 
+   spread(Measure, Value) %&gt;%
+   filter(City != &quot;New York&quot; &amp; City != &quot;Washington&quot;) %&gt;%
+   summarize(cor(density, sfr))</code></pre>
+<p>This lower the correlation to -0.37. That is, there is a small negative association between how dense a city is and how much of its residential land is zoned exclusively for detached single-family homes. But more data is needed to confirm this.</p>
+<p>All code and data are available on <a href="https://github.com/vgXhc/madison_zoning">GitHub</a>.</p>
 </div>

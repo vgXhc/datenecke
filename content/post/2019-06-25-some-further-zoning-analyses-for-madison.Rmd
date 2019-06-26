@@ -10,7 +10,7 @@ tags:
   - landuse
   - Madison
 ---
-I got some good feedback after posting my article on Madison's zoning restriction on Facebook and Reddit, prompting some additional analyses.
+I got some good feedback after posting my article [on Madison's zoning restrictions](https://vgxhc.github.io/madison_single_family_housing/) on Facebook and Reddit, prompting some additional analyses.
 
 # Why do you look only at residentially zoned land?
 Several people pointed out that comparing the zoning districts that only allow detached single-family homes (SFR) to all *residential* zoning districts may be misleading. In many cities the densest parts are not in residential zoning districts but in downtown areas zoned for mixed use. I think that's a fair point, but it was the original NYT article that chose only residential areas as the comparator, and I wanted to make Madison comparable to the other cities in the NYT analysis. 
@@ -45,7 +45,7 @@ The result? 49% of all land that reasonably could have residential units on it a
 # Is there a correlation between the percentage of SFR zoning and overall density?
 It's a good question: Does the metric the NYT used actually have an association with overall density of a city? (Note that even if there is a correlation, this absolutely doesn't mean there is a causal connection! There are many, many factors that impact a city's overall density.)
 
-There are few data points to work with. I retrieved density information for all the NYT cities and Madison from Wikipedia:
+There are few data points to work with. I retrieved density information for all cities in the NYT article and Madison from Wikipedia:
 
 ```{r eval = FALSE}
 dens_zon <- read_csv("data/density_zoning.csv")
@@ -71,28 +71,29 @@ Hm, -0.885. That's a very, very high correlation. But it's always good to look a
    ylab("Overall density (population/sq mi)")
 ```
 
+![Scatterplot of overall density and percent single family zoning](/post/Rplot.svg)
+
+Okay, New York is clearly way out there. Let's exclude NYC and do the correlation again:
+
+```{r eval = FALSE}
+ dens_zon %>% 
+   spread(Measure, Value) %>%
+   filter(City != "New York") %>%
+   summarize(cor(density, sfr))
+```
 
 
-> # let's take out NYC
-> dens_zon %>% 
-+   spread(Measure, Value) %>%
-+   filter(City != "New York") %>%
-+   summarize(cor(density, sfr))
-# A tibble: 1 x 1
-  `cor(density, sfr)`
-                <dbl>
-1              -0.693
-> 
-> # let's also take out DC
-> dens_zon %>% 
-+   spread(Measure, Value) %>%
-+   filter(City != "New York" & City != "Washington") %>%
-+   summarize(cor(density, sfr))
-# A tibble: 1 x 1
-  `cor(density, sfr)`
-                <dbl>
-1              -0.366
-> 
+That gets us a correlation of -0.69. Much lower, but still pretty high. Is DC also an outlier?
 
-and then created a scatterplot.
 
+
+```{r eval = FALSE}
+ dens_zon %>% 
+   spread(Measure, Value) %>%
+   filter(City != "New York" & City != "Washington") %>%
+   summarize(cor(density, sfr))
+```
+
+This lower the correlation to -0.37. That is, there is a small negative association between how dense a city is and how much of its residential land is zoned exclusively for detached single-family homes. But more data is needed to confirm this. 
+
+All code and data are available on [GitHub](https://github.com/vgXhc/madison_zoning).
