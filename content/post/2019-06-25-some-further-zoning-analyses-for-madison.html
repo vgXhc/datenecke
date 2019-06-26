@@ -50,7 +50,11 @@ res_sfr/(total-other_area)</code></pre>
 <pre class="r"><code> dens_zon %&gt;% 
    spread(Measure, Value) %&gt;%
    summarize(cor(density, sfr))</code></pre>
+<<<<<<< HEAD
 <p>Hm, -0.885. That’s a very, very high correlation. But it’s always good to look at your data points in a scatterplot to see what’s actually going on:</p>
+=======
+<p>Hm, -0.885. That’s a very, very strong correlation. But it’s always good to look at your data points in a scatterplot:</p>
+>>>>>>> 0b339d451adba958c37f9ae2fe7b07e3ca5bc210
 <pre class="r"><code> dens_zon %&gt;% 
    spread(Measure, Value) %&gt;%
    ggplot(aes(sfr, density, label = City)) +
