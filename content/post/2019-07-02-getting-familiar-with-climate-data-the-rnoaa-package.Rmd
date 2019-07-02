@@ -10,3 +10,19 @@ tags:
   - rnoaa
   - climate
 ---
+
+As someone interested in data on biking and active transportation, weather and climate data is of high interest for me as well. I'm currently waiting to get access to the City of Madison's bike counter data, and I figured now is a good time to familiarize myself with the [`rnoaa`](https://cran.r-project.org/web/packages/rnoaa/) package. The package provides access to a huge amount of data sources from NOAA.
+
+```{r}
+library("rnoaa")
+library("tidyverse")
+options(noaakey = "qCKyqxaQVKfTDHBKUfrnmIZSkKQKzZdL")
+```
+
+```{r}
+stations <- ncdc_locs(locationcategoryid='CITY', sortfield='name', sortorder='desc')
+str(stations)
+stations$data %>% filter(name == "Madison, WI")
+```
+
+
