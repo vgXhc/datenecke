@@ -1,0 +1,12 @@
+---
+title: 'Getting familiar with climate data: the rnoaa package'
+author: Harald Kliems
+date: '2019-07-02'
+slug: getting-familiar-with-climate-data-the-rnoaa-package
+categories: []
+tags:
+  - Madison
+  - R
+  - rnoaa
+  - climate
+---
