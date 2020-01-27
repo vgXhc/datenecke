@@ -95,12 +95,12 @@ counts2</code></pre>
   geom_histogram() +
   facet_wrap(~location)</code></pre>
 <pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
-<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-6-1.png" width="70%" />
 Both histograms look plausible on the left side, but they seem to have a very long right tail. Better to investigate possible outliers with a boxplot.</p>
 <pre class="r"><code>counts2 %&gt;% 
   ggplot(aes(location, Count)) +
   geom_boxplot()</code></pre>
-<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-7-1.png" width="70%" /></p>
 <p>Some of the outliers on the top look a little suspicious and warrant further investigation. It’s not impossible to have 1000 cyclists in one hour (or 17 per minute), but these counts seem very high.</p>
 <p>So let’s look at hourly counts above 500 more closely.</p>
 <pre class="r"><code>counts2 %&gt;% 
@@ -130,14 +130,14 @@ Both histograms look plausible on the left side, but they seem to have a very lo
   filter(Count_Date &gt;= ymd(&quot;2018-07-02&quot;) &amp; Count_Date &lt;= ymd(&quot;2018-07-04&quot;) &amp; location == &quot;SW Path at Randall&quot;) %&gt;% 
   ggplot(aes(Count_Date, Count)) +
   geom_col()</code></pre>
-<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-9-1.png" width="70%" /></p>
 <p>On July 2, there’s a first spike at 2pm, then a big drop from 6 to 7 pm, and then counts go from less than 50 to almost 900 and back down below 50 again within 2 hours. July 3 has an overall larger peak, but here too the hour-to-hour changes seem implausible. Another piece of evidence: The two counters are located fairly close to each other, and so extreme counts at one counter should be noticeable at the other counter.</p>
 <pre class="r"><code>counts2 %&gt;% 
   filter(Count_Date &gt;= ymd(&quot;2018-07-02&quot;) &amp; Count_Date &lt;= ymd(&quot;2018-07-04&quot;)) %&gt;% 
   group_by(location) %&gt;% 
 ggplot(aes(Count_Date, Count, fill = location)) +
   geom_col(position = &quot;dodge&quot;)</code></pre>
-<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-10-1.png" width="70%" /></p>
 <p>Nope, the Cap City counter looks like any regular day. I’m ready to call these outliers. But there’s one more test:</p>
 <p>Instead of using a hard cap with thresholds determined by long-term expected counts, the NITC report discusses a method based on a moving 27-day average and interquartile ranges (p. 41-42). A fixed threshold doesn’t account for seasonal variation – a 500 cylists/hour count in July may be plausible; in January it would be an obvious outlier. Looking at the distribution of the data only in the previous 27 days fixes this issue. I’ll only do this calculation for the July 2 and 3 counts.</p>
 <pre class="r"><code>counts2 %&gt;%
@@ -180,7 +180,7 @@ dupes2 %&gt;%
   group_by(values) %&gt;%
   ggplot(aes(rlength, values)) +
   geom_point(alpha = 0.2)</code></pre>
-<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-13-1.png" width="70%" /></p>
 </div>
 <div id="zero-counts" class="section level3">
 <h3>Zero-counts</h3>
@@ -191,7 +191,7 @@ dupes2 %&gt;%
   group_by(values) %&gt;%
   ggplot(aes(rlength, values)) +
   geom_point(alpha = 0.2)</code></pre>
-<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-14-1.png" width="70%" /></p>
 <p>This looks great: Almost all remaining points are for runs that are either very short, with just 1 or 2 consecutive hours of identical counts, or the runs are longer but they have very low counts or 0 counts, something that we would expect to see in the data based on the bar plot above.</p>
 <p>The NITC report recommends different thresholds for runs of zero and non-zero runs. For zero counts, run lengths over 99 are considered suspicious; 50-99 runs possibly suspicious. It’s not entirely clear if this refers to 15-minute or 1-hour count intervals; I’m assuming it’s 15-minutes intervals, as that would put the “suspicious” threshold to 25 consecutive hours, or just over a full day, of zero counts.</p>
 <pre class="r"><code>dupes2 %&gt;% 
@@ -205,15 +205,18 @@ dupes2 %&gt;%
 <div id="non-zero-count-runs" class="section level3">
 <h3>Non-zero count runs</h3>
 <p>For non-zero counts, the thresholds are more complex:</p>
-<p><img src="img/non-zero-thresholds.png" alt="Test" />
-This may be easier to see in another plot, with zero-counts and run lengths of 1 and 2 removed:</p>
+<div class="figure">
+<img src="/non-zero-thresholds.png" alt="Table of figures for non-zero count thresholds" />
+<p class="caption">Table of figures for non-zero count thresholds</p>
+</div>
+<p>This may be easier to see in another plot, with zero-counts and run lengths of 1 and 2 removed:</p>
 <pre class="r"><code>dupes2 %&gt;% 
   filter(values &gt; 1 &amp; rlength &gt;= 3) %&gt;% 
   arrange(desc(rlength)) %&gt;%
   group_by(values) %&gt;%
   ggplot(aes(rlength, values)) +
   geom_point(alpha = 0.2)</code></pre>
-<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-16-1.png" width="672" />
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-16-1.png" width="70%" />
 For the 3-runs, only one value is above 99 and hence possibly suspicious; for the 4-runs, all points are fine; and for the 5-runs one point seems close to the threshold and I have to look at the actual numbers.</p>
 <pre class="r"><code>dupes2 %&gt;% 
   filter((values &gt;= 100 &amp; rlength == 3) | #possibly suspicious for 3-runs
