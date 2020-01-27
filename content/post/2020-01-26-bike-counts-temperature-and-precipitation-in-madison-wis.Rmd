@@ -180,7 +180,8 @@ Phew, only the one point that already has been on our radar. I'll further invest
 ### Non-zero count runs
 For non-zero counts, the thresholds are more complex: 
 
-![Test](img/non-zero-thresholds.png)
+![Table of figures for non-zero count thresholds](/non-zero-thresholds.png)
+
 This may be easier to see in another plot, with zero-counts and run lengths of 1 and 2 removed:
 
 ```{r}

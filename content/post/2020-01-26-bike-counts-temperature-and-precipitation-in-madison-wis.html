@@ -205,8 +205,11 @@ dupes2 %&gt;%
 <div id="non-zero-count-runs" class="section level3">
 <h3>Non-zero count runs</h3>
 <p>For non-zero counts, the thresholds are more complex:</p>
-<p><img src="img/non-zero-thresholds.png" alt="Test" />
-This may be easier to see in another plot, with zero-counts and run lengths of 1 and 2 removed:</p>
+<div class="figure">
+<img src="/non-zero-thresholds.png" alt="Table of figures for non-zero count thresholds" />
+<p class="caption">Table of figures for non-zero count thresholds</p>
+</div>
+<p>This may be easier to see in another plot, with zero-counts and run lengths of 1 and 2 removed:</p>
 <pre class="r"><code>dupes2 %&gt;% 
   filter(values &gt; 1 &amp; rlength &gt;= 3) %&gt;% 
   arrange(desc(rlength)) %&gt;%
