@@ -1,0 +1,300 @@
+---
+title: Bike counts, temperature, and precipitation in Madison (Wis.)
+author: Harald Kliems
+date: '2020-01-26'
+slug: bike-counts-temperature-and-precipitation-in-madison-wis
+categories: []
+tags:
+  - R
+  - Madison
+  - bikes
+---
+
+
+
+<p>My home town, Madison (Wis.), has automated bike counters on two of the city’s busiest bike paths, the Southwest Path and the Capital City Trail. The data is available with hourly counts on <a href="https://data-cityofmadison.opendata.arcgis.com/search">Madison’s Open Data portal</a>, spanning several years. In this post series I will combine the bike count data with climate data to investigate the relationship between bike counts, temperature, and precipitation. How many more (or fewer) people bike on a day that is 5 degrees colder, or when it snows? In this first part, I will prepare the bike count data and perform a number of quality checks.</p>
+<div id="packages" class="section level2">
+<h2>Packages</h2>
+<p>All that is needed for data prep and quality checks is the <code>tidyverse</code>, including <code>lubridate</code> to deal with dates and times. Other packages will come into play later.</p>
+<pre class="r"><code>library(tidyverse)
+library(lubridate)</code></pre>
+</div>
+<div id="getting-and-preparing-the-bike-count-data" class="section level2">
+<h2>Getting and preparing the bike count data</h2>
+<p>CSV files for each counter can be downloaded right from the Open Data portal. The files contain three columns, one of them a meaningless object id, which I will skip in the import. I’ll add a variable of the location of the counter and then combine the two:</p>
+<pre class="r"><code>cc_counts &lt;- read_csv(&quot;https://opendata.arcgis.com/datasets/367cb53685c74628b4975d8f65d20748_0.csv&quot;, col_types = &quot;ci-&quot;) %&gt;% mutate(location = &quot;Cap City at North Shore&quot;)
+
+sw_counts &lt;- read_csv(&quot;https://opendata.arcgis.com/datasets/8860784eb30e4a45a6f853b5f81949f2_0.csv&quot;, col_types = &quot;ci-&quot;) %&gt;% mutate(location = &quot;SW Path at Randall&quot;)
+
+counts &lt;- bind_rows(cc_counts, sw_counts)</code></pre>
+<p>Caution: The dataset gets updated quarterly, and the most recent update broke my code. Took me a while to figure that out.</p>
+<div id="na-values" class="section level3">
+<h3>NA values</h3>
+<p>A quick data check shows that the data is relatively tidy.</p>
+<pre class="r"><code>summary(counts)</code></pre>
+<pre><code>##   Count_Date            Count          location        
+##  Length:79355       Min.   :  0.00   Length:79355      
+##  Class :character   1st Qu.:  4.00   Class :character  
+##  Mode  :character   Median : 21.00   Mode  :character  
+##                     Mean   : 52.73                     
+##                     3rd Qu.: 77.00                     
+##                     Max.   :978.00                     
+##                     NA&#39;s   :8</code></pre>
+<p>There are a few <code>NA</code> values in the counts. I first thought they may be a random malfunction, but let’s take a look at when and where these occur:</p>
+<pre class="r"><code>x &lt;- which(is.na(counts$Count))
+counts[x,]</code></pre>
+<pre><code>## # A tibble: 8 x 3
+##   Count_Date      Count location               
+##   &lt;chr&gt;           &lt;int&gt; &lt;chr&gt;                  
+## 1 3/13/16 3:00 AM    NA Cap City at North Shore
+## 2 3/12/17 3:00 AM    NA Cap City at North Shore
+## 3 3/11/18 3:00 AM    NA Cap City at North Shore
+## 4 11/4/19 4:00 AM    NA Cap City at North Shore
+## 5 3/13/16 3:00 AM    NA SW Path at Randall     
+## 6 3/12/17 3:00 AM    NA SW Path at Randall     
+## 7 3/11/18 3:00 AM    NA SW Path at Randall     
+## 8 11/4/19 4:00 AM    NA SW Path at Randall</code></pre>
+<p>Notice anything about the dates? It’s the switch to daylight savings time (DST)! There’s no count for 2 am on those days because there is no 2 am. The fifth row is the only that doesn’t quite fit this, but it must also be DST-related. Conclusion: It’s fine to just drop these NAs.</p>
+</div>
+<div id="fixing-dates-and-times" class="section level3">
+<h3>Fixing dates and times</h3>
+<p>The next step is to convert the date and time variable, which currently is stored as a character. I’ll use <code>lubridate</code> to fix this. I’m also specifying the time zone and adding an <code>dayofweek</code> and a weekend/weekday indicator variable, which will come in handy later.</p>
+<pre class="r"><code>counts2 &lt;- counts %&gt;% 
+  drop_na %&gt;%
+  mutate(Count = as.integer(Count), location = as.factor(location)) %&gt;%
+  mutate(Count_Date = mdy_hm(Count_Date, tz = &quot;US/Central&quot;)) %&gt;% #specifying the time zone will help when merging climate data later
+  mutate(dayofweek = wday(Count_Date, label = TRUE)) %&gt;% #turning on labels makes this more intuitive
+  mutate(weekendind = ifelse(dayofweek %in% c(&quot;Sat&quot;, &quot;Sun&quot;), &quot;weekend&quot;, &quot;weekday&quot;))
+
+counts2</code></pre>
+<pre><code>## # A tibble: 79,347 x 5
+##    Count_Date          Count location                dayofweek weekendind
+##    &lt;dttm&gt;              &lt;int&gt; &lt;fct&gt;                   &lt;ord&gt;     &lt;chr&gt;     
+##  1 2015-06-23 11:00:00    92 Cap City at North Shore Tue       weekday   
+##  2 2015-06-23 12:00:00   191 Cap City at North Shore Tue       weekday   
+##  3 2015-06-23 13:00:00   156 Cap City at North Shore Tue       weekday   
+##  4 2015-06-23 14:00:00   155 Cap City at North Shore Tue       weekday   
+##  5 2015-06-23 15:00:00   243 Cap City at North Shore Tue       weekday   
+##  6 2015-06-23 16:00:00   353 Cap City at North Shore Tue       weekday   
+##  7 2015-06-23 17:00:00   422 Cap City at North Shore Tue       weekday   
+##  8 2015-06-23 18:00:00   361 Cap City at North Shore Tue       weekday   
+##  9 2015-06-23 19:00:00   326 Cap City at North Shore Tue       weekday   
+## 10 2015-06-23 20:00:00   173 Cap City at North Shore Tue       weekday   
+## # ... with 79,337 more rows</code></pre>
+</div>
+</div>
+<div id="quality-of-count-numbers" class="section level2">
+<h2>Quality of count numbers</h2>
+<p>Next some additional quality checks on the actual count numbers. With a large dataset and automated counters, there’s a good chance that there are errors of various kinds in the data. Fortunately, there’s a recent report by the National Institute for Transportation and Communities (NITC) that provides guidance for identifying suspicious bike counter data. The authors use two main methods for identifying suspect data: Unusually high counts and runs of identical subsequent counts (e.g. a count of 53 for three hours in a row, or a whole day’s worth of counts of no cyclists at all).</p>
+</div>
+<div id="unusually-high-counts" class="section level2">
+<h2>Unusually high counts</h2>
+<p>A histogram of hourly count volumes is always a good start:</p>
+<pre class="r"><code>counts2 %&gt;%
+  ggplot(aes(Count)) +
+  geom_histogram() +
+  facet_wrap(~location)</code></pre>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+Both histograms look plausible on the left side, but they seem to have a very long right tail. Better to investigate possible outliers with a boxplot.</p>
+<pre class="r"><code>counts2 %&gt;% 
+  ggplot(aes(location, Count)) +
+  geom_boxplot()</code></pre>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Some of the outliers on the top look a little suspicious and warrant further investigation. It’s not impossible to have 1000 cyclists in one hour (or 17 per minute), but these counts seem very high.</p>
+<p>So let’s look at hourly counts above 500 more closely.</p>
+<pre class="r"><code>counts2 %&gt;% 
+  filter(Count &gt; 500) %&gt;% 
+  arrange(location, desc(Count))</code></pre>
+<pre><code>## # A tibble: 14 x 5
+##    Count_Date          Count location                dayofweek weekendind
+##    &lt;dttm&gt;              &lt;int&gt; &lt;fct&gt;                   &lt;ord&gt;     &lt;chr&gt;     
+##  1 2018-06-16 11:00:00   786 Cap City at North Shore Sat       weekend   
+##  2 2017-07-29 11:00:00   781 Cap City at North Shore Sat       weekend   
+##  3 2019-06-15 11:00:00   762 Cap City at North Shore Sat       weekend   
+##  4 2015-07-25 11:00:00   685 Cap City at North Shore Sat       weekend   
+##  5 2016-07-30 11:00:00   587 Cap City at North Shore Sat       weekend   
+##  6 2019-06-15 12:00:00   521 Cap City at North Shore Sat       weekend   
+##  7 2019-05-26 14:00:00   501 Cap City at North Shore Sun       weekend   
+##  8 2018-07-02 20:00:00   978 SW Path at Randall      Mon       weekday   
+##  9 2018-07-03 18:00:00   974 SW Path at Randall      Tue       weekday   
+## 10 2018-07-03 19:00:00   934 SW Path at Randall      Tue       weekday   
+## 11 2018-07-02 21:00:00   690 SW Path at Randall      Mon       weekday   
+## 12 2018-06-25 20:00:00   576 SW Path at Randall      Mon       weekday   
+## 13 2018-07-13 16:00:00   566 SW Path at Randall      Fri       weekday   
+## 14 2018-06-16 21:00:00   544 SW Path at Randall      Sat       weekend</code></pre>
+<p>For counters with an expected daily volume of over 500, the NITC report considers 15-minute counts over 2000 suspicious and counts over 1000 as “possibly suspicious.” Note that these are <em>15-minute</em> intervals, whereas we’re working with <em>hourly</em> counts. So using the report’s thresholds, the observed counts are far from suspicious. I do find these thresholds rather high, and so a little more investigation is in order.</p>
+<p>The Cap City numbers all look plausible: All but one are on summer Saturdays around noon, and the one exception is a Sunday. As we’ll see below, Saturdays are the busiest days at that location, and the Cap City location has a higher average count than the SW Path one.</p>
+<p>The SW Path counts look more suspicious. The top four counts happened on July 2 and 3, 2018, a Monday and Tuesday, both times in the evening. This is right before the July 4 holiday, which may explain slightly higher evening numbers, with people taking Monday and Tuesday off. But the numbers are so high that this seems implausible. Also note the next highest counts here also all happened in the summer of 2018. I quickly checked a local newspapers events calendar for July 3, and none of the events listed would explain the spike in numbers (the counter is right next to the UW-Madison’s football stadium…). Let’s plot hourly counts for the suspicious days:</p>
+<pre class="r"><code>counts2 %&gt;% 
+  filter(Count_Date &gt;= ymd(&quot;2018-07-02&quot;) &amp; Count_Date &lt;= ymd(&quot;2018-07-04&quot;) &amp; location == &quot;SW Path at Randall&quot;) %&gt;% 
+  ggplot(aes(Count_Date, Count)) +
+  geom_col()</code></pre>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>On July 2, there’s a first spike at 2pm, then a big drop from 6 to 7 pm, and then counts go from less than 50 to almost 900 and back down below 50 again within 2 hours. July 3 has an overall larger peak, but here too the hour-to-hour changes seem implausible. Another piece of evidence: The two counters are located fairly close to each other, and so extreme counts at one counter should be noticeable at the other counter.</p>
+<pre class="r"><code>counts2 %&gt;% 
+  filter(Count_Date &gt;= ymd(&quot;2018-07-02&quot;) &amp; Count_Date &lt;= ymd(&quot;2018-07-04&quot;)) %&gt;% 
+  group_by(location) %&gt;% 
+ggplot(aes(Count_Date, Count, fill = location)) +
+  geom_col(position = &quot;dodge&quot;)</code></pre>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Nope, the Cap City counter looks like any regular day. I’m ready to call these outliers. But there’s one more test:</p>
+<p>Instead of using a hard cap with thresholds determined by long-term expected counts, the NITC report discusses a method based on a moving 27-day average and interquartile ranges (p. 41-42). A fixed threshold doesn’t account for seasonal variation – a 500 cylists/hour count in July may be plausible; in January it would be an obvious outlier. Looking at the distribution of the data only in the previous 27 days fixes this issue. I’ll only do this calculation for the July 2 and 3 counts.</p>
+<pre class="r"><code>counts2 %&gt;%
+  filter(location == &quot;SW Path at Randall&quot; &amp; Count_Date &gt;= ymd(&quot;2018-07-02&quot;) - days(27) &amp; Count_Date &lt;= ymd(&quot;2018-07-02&quot;)) %&gt;% 
+  group_by(hour(Count_Date)) %&gt;% 
+  summarize(hourly_IQR = IQR(Count),
+            q3 = quantile(Count, 3/4),
+            q1 = quantile(Count, 1/4)) %&gt;% 
+  mutate(upper_thresh = q3 + 2* hourly_IQR, #establishing the upper threshold
+         lower_thresh = q1 - 2* hourly_IQR) #and the lower threshold (which can be negative)</code></pre>
+<pre><code>## # A tibble: 24 x 6
+##    `hour(Count_Date)` hourly_IQR    q3    q1 upper_thresh lower_thresh
+##                 &lt;int&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+##  1                  0        5.5   6.5     1         17.5          -10
+##  2                  1        2     2       0          6             -4
+##  3                  2        1.5   1.5     0          4.5           -3
+##  4                  3        1     1       0          3             -2
+##  5                  4        1     1       0          3             -2
+##  6                  5       14    17       3         45            -25
+##  7                  6       27.5  45.5    18        100.           -37
+##  8                  7       61.5 104.     43        228.           -80
+##  9                  8       65.5 128.     63        260.           -68
+## 10                  9       53.5  97.5    44        204.           -63
+## # ... with 14 more rows</code></pre>
+<p>The thresholds for 6, 7, 8, and 9pm – the times of day when the outliers occurred – range from 125 to 200. This clearly puts our suspicious values above. But note that the authors of the NITC report haven’t fully tested this method and warn that it may be overly sensitive and produce too many false positives.</p>
+<p>Determining what is and isn’t an outlier is always tricky. In this case, I think there is enough evidence to justify discarding all the counts above 500 for the SW Path counter and keep all the ones at the John Nolen one.</p>
+<div id="runs" class="section level3">
+<h3>Runs!</h3>
+<p>Are there are suspicious runs of identical subsequent hourly counts in our data? The <code>rle</code> function helps with this.</p>
+<pre class="r"><code># check for consecutive identical values
+dupes &lt;- rle(counts2$Count)
+dupes</code></pre>
+<pre><code>## Run Length Encoding
+##   lengths: int [1:72719] 1 1 1 1 1 1 1 1 1 1 ...
+##   values : int [1:72719] 92 191 156 155 243 353 422 361 326 173 ...</code></pre>
+<p>This returns a vector of the length of a run and its value. As you can see, the vector has 72719 values, as opposed to the full dataset’s 79347, indicating that there are indeed subsequent identical values. I’ll convert the dupes into a tibble for easier manipulation and then plot the run length against the count value.</p>
+<pre class="r"><code>dupes2 &lt;- tibble(rlength = dupes$lengths, values = dupes$values)
+dupes2 %&gt;% 
+  arrange(desc(rlength)) %&gt;%
+  group_by(values) %&gt;%
+  ggplot(aes(rlength, values)) +
+  geom_point(alpha = 0.2)</code></pre>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+</div>
+<div id="zero-counts" class="section level3">
+<h3>Zero-counts</h3>
+<p>It’s a little hard to see what’s going, but clearly the point in the lower right corner is problematic: Over 500 consecutive hours, or 21 days, of 0 counts indicates that one of the counters must have been offline. I’ll filter out this point for now so that it’s easier to see what is going on with the other points.</p>
+<pre class="r"><code>dupes2 %&gt;% 
+  filter(rlength &lt; 500) %&gt;% 
+  arrange(desc(rlength)) %&gt;%
+  group_by(values) %&gt;%
+  ggplot(aes(rlength, values)) +
+  geom_point(alpha = 0.2)</code></pre>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>This looks great: Almost all remaining points are for runs that are either very short, with just 1 or 2 consecutive hours of identical counts, or the runs are longer but they have very low counts or 0 counts, something that we would expect to see in the data based on the bar plot above.</p>
+<p>The NITC report recommends different thresholds for runs of zero and non-zero runs. For zero counts, run lengths over 99 are considered suspicious; 50-99 runs possibly suspicious. It’s not entirely clear if this refers to 15-minute or 1-hour count intervals; I’m assuming it’s 15-minutes intervals, as that would put the “suspicious” threshold to 25 consecutive hours, or just over a full day, of zero counts.</p>
+<pre class="r"><code>dupes2 %&gt;% 
+  filter(rlength &gt; 25 &amp; values == 0)</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   rlength values
+##     &lt;int&gt;  &lt;int&gt;
+## 1     525      0</code></pre>
+<p>Phew, only the one point that already has been on our radar. I’ll further investigate this later.</p>
+</div>
+<div id="non-zero-count-runs" class="section level3">
+<h3>Non-zero count runs</h3>
+<p>For non-zero counts, the thresholds are more complex:</p>
+<p><img src="img/non-zero-thresholds.png" alt="Test" />
+This may be easier to see in another plot, with zero-counts and run lengths of 1 and 2 removed:</p>
+<pre class="r"><code>dupes2 %&gt;% 
+  filter(values &gt; 1 &amp; rlength &gt;= 3) %&gt;% 
+  arrange(desc(rlength)) %&gt;%
+  group_by(values) %&gt;%
+  ggplot(aes(rlength, values)) +
+  geom_point(alpha = 0.2)</code></pre>
+<p><img src="/post/2020-01-26-bike-counts-temperature-and-precipitation-in-madison-wis_files/figure-html/unnamed-chunk-16-1.png" width="672" />
+For the 3-runs, only one value is above 99 and hence possibly suspicious; for the 4-runs, all points are fine; and for the 5-runs one point seems close to the threshold and I have to look at the actual numbers.</p>
+<pre class="r"><code>dupes2 %&gt;% 
+  filter((values &gt;= 100 &amp; rlength == 3) | #possibly suspicious for 3-runs
+           (values &gt;= 6 &amp; rlength == 5))  #possibly suspicious for 5-runs</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   rlength values
+##     &lt;int&gt;  &lt;int&gt;
+## 1       3    129
+## 2       5      7</code></pre>
+<p>Aha, one additional possibly suspicious point. So our run analysis has only identified one run as “suspicious” and two more as “possibly suspicious”! A 525-hour period of 0 counts, three counsecutive hours of repeated counts of 129; and 5 hours with counts of 7. Because there doesn’t seem to be a good way to further investigate and they’re only “<em>possibly</em> suspicious,” I’ll leave the latter two runs alone. The long run of zero counts, however, needs to be dealt with.</p>
+<p>Moving back from the <code>dupes2</code> tibble to the counts is not straightforward, as they have different lengths. I can’t currently think of a generalizable way to do this. But as I’m only doing with one run, a less elegant way will do. Remember that we’re trying to find the time 525-hour time period where counts were zero. The <code>lead</code> function will let us do this:</p>
+<pre class="r"><code>counts2 %&gt;% 
+  filter(Count == 0 &amp; 
+           lead(Count, n = 25L) == 0)</code></pre>
+<pre><code>## # A tibble: 2,767 x 5
+##    Count_Date          Count location                dayofweek weekendind
+##    &lt;dttm&gt;              &lt;int&gt; &lt;fct&gt;                   &lt;ord&gt;     &lt;chr&gt;     
+##  1 2015-08-22 03:00:00     0 Cap City at North Shore Sat       weekend   
+##  2 2015-10-17 04:00:00     0 Cap City at North Shore Sat       weekend   
+##  3 2015-10-23 03:00:00     0 Cap City at North Shore Fri       weekday   
+##  4 2015-10-24 04:00:00     0 Cap City at North Shore Sat       weekend   
+##  5 2015-10-29 03:00:00     0 Cap City at North Shore Thu       weekday   
+##  6 2015-10-30 03:00:00     0 Cap City at North Shore Fri       weekday   
+##  7 2015-10-31 03:00:00     0 Cap City at North Shore Sat       weekend   
+##  8 2015-11-04 03:00:00     0 Cap City at North Shore Wed       weekday   
+##  9 2015-11-05 03:00:00     0 Cap City at North Shore Thu       weekday   
+## 10 2015-11-11 03:00:00     0 Cap City at North Shore Wed       weekday   
+## # ... with 2,757 more rows</code></pre>
+<p>So we’re filtering for values where the <code>Count</code> is 0 <em>and</em> the count 25 hours later is also 0. As we can see from the numbers of results, this isn’t specific enough yet. This makes sense, as it’s common to have, say, a 2am zero count followed by a 3am zero count the next day. So we need to add a condition:</p>
+<pre class="r"><code>counts2 %&gt;% 
+  filter(Count == 0 &amp; 
+           lead(Count, n = 25L) == 0 &amp;
+           lead(Count, n = 12L) == 0)</code></pre>
+<pre><code>## # A tibble: 528 x 5
+##    Count_Date          Count location                dayofweek weekendind
+##    &lt;dttm&gt;              &lt;int&gt; &lt;fct&gt;                   &lt;ord&gt;     &lt;chr&gt;     
+##  1 2016-12-25 04:00:00     0 Cap City at North Shore Sun       weekend   
+##  2 2017-12-24 19:00:00     0 Cap City at North Shore Sun       weekend   
+##  3 2017-12-25 01:00:00     0 Cap City at North Shore Mon       weekday   
+##  4 2019-01-29 23:00:00     0 Cap City at North Shore Tue       weekday   
+##  5 2019-02-18 03:00:00     0 Cap City at North Shore Mon       weekday   
+##  6 2019-02-18 15:00:00     0 Cap City at North Shore Mon       weekday   
+##  7 2019-02-18 16:00:00     0 Cap City at North Shore Mon       weekday   
+##  8 2019-02-18 17:00:00     0 Cap City at North Shore Mon       weekday   
+##  9 2019-02-18 18:00:00     0 Cap City at North Shore Mon       weekday   
+## 10 2019-02-18 19:00:00     0 Cap City at North Shore Mon       weekday   
+## # ... with 518 more rows</code></pre>
+<p>This still doesn’t give us only the period we’re looking for, but it’s good enough: On February 18, 2019, the Cap City counter stops counting and only comes back online at midnight on March 12. I looked back through my emails and apparently I emailed the city’s traffic engineer about the counter in January:</p>
+<blockquote>
+<p>I quickly wanted to ask about the display of the John Nolen bike counter. People on our Facebook group keep asking why it has been broken so long and when it will be back. More importantly, people are concerned that they aren’t being counted. From the public Eco-Counter website, it looks like people are still being counted and it’s just the display that’s broken.</p>
+</blockquote>
+<p>On January 26, <a href="https://www.facebook.com/groups/MBIIC/permalink/1795185850587400/">a city crew reportedly worked on the counter</a>. I guess whatever needed to be done to repair the display unit took the actual counter offline for a couple weeks.</p>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>At this point I have a good sense of the data quality of the counts, and I have identified the follwoing counts that are likely incorrect:</p>
+<ul>
+<li>8 NA values due to Daylight Savings Time</li>
+<li>7 suspiciously high values at the SW Path Counter</li>
+<li>525 zero counts because of a malfunction of the Cap City counter</li>
+</ul>
+<p>So out of the 79355 total observations, 540 or 0.68% had quality issues. This is pretty good, but it does leave the question on how to handle these. Removing them is the easy solution. Because the percentage of missing values that would result from that is very low, this shouldn’t cause issues with analyses such a regression models, and I can always revisit this at later point.</p>
+<p>Let’s create a final dataset that removes all these observations. Note that for filtering by date/time you have to specify the time zone! Otherwise R uses the UTC time zone that the data frame is in, as specified above. Also note that <code>tidyverse</code>’s <code>filter</code> returns values where the condition is <code>TRUE</code>. This makes it necessary to use <a href="https://en.wikipedia.org/wiki/De_Morgan%27s_laws">De Morgan’s Laws</a> to invert the conditions.</p>
+<pre class="r"><code>counts3 &lt;- counts2 %&gt;% 
+  filter(location == &quot;SW Path at Randall&quot; | location == &quot;Cap City at North Shore&quot; &amp; (Count_Date &lt;= ymd_hms(&quot;2019-02-01 03:00:00&quot;, tz = &quot;US/Central&quot;) | Count_Date &gt;= ymd_hms(&quot;2019-03-12 00:00:00&quot;, tz = &quot;US/Central&quot;))) %&gt;%  #remove long zero-count run
+  filter(location != &quot;SW Path at Randall&quot; | Count &lt; 500) #remove SW counts over 500
+counts3</code></pre>
+<pre><code>## # A tibble: 78,408 x 5
+##    Count_Date          Count location                dayofweek weekendind
+##    &lt;dttm&gt;              &lt;int&gt; &lt;fct&gt;                   &lt;ord&gt;     &lt;chr&gt;     
+##  1 2015-06-23 11:00:00    92 Cap City at North Shore Tue       weekday   
+##  2 2015-06-23 12:00:00   191 Cap City at North Shore Tue       weekday   
+##  3 2015-06-23 13:00:00   156 Cap City at North Shore Tue       weekday   
+##  4 2015-06-23 14:00:00   155 Cap City at North Shore Tue       weekday   
+##  5 2015-06-23 15:00:00   243 Cap City at North Shore Tue       weekday   
+##  6 2015-06-23 16:00:00   353 Cap City at North Shore Tue       weekday   
+##  7 2015-06-23 17:00:00   422 Cap City at North Shore Tue       weekday   
+##  8 2015-06-23 18:00:00   361 Cap City at North Shore Tue       weekday   
+##  9 2015-06-23 19:00:00   326 Cap City at North Shore Tue       weekday   
+## 10 2015-06-23 20:00:00   173 Cap City at North Shore Tue       weekday   
+## # ... with 78,398 more rows</code></pre>
+<p>Alright, that’s it for the data cleaning and quality control. In the next post, I’ll present some exploratory plots.</p>
+</div>

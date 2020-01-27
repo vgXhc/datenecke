@@ -6,10 +6,19 @@
     <description>Recent content on Harald&#39;s Datenecke</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 25 Jun 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 26 Jan 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Bike counts, temperature, and precipitation in Madison (Wis.)</title>
+      <link>/2020/01/26/bike-counts-temperature-and-precipitation-in-madison-wis/</link>
+      <pubDate>Sun, 26 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/01/26/bike-counts-temperature-and-precipitation-in-madison-wis/</guid>
+      <description>My home town, Madison (Wis.), has automated bike counters on two of the city’s busiest bike paths, the Southwest Path and the Capital City Trail. The data is available with hourly counts on Madison’s Open Data portal, spanning several years. In this post series I will combine the bike count data with climate data to investigate the relationship between bike counts, temperature, and precipitation. How many more (or fewer) people bike on a day that is 5 degrees colder, or when it snows?</description>
+    </item>
     
     <item>
       <title>Some further zoning analyses for Madison</title>
