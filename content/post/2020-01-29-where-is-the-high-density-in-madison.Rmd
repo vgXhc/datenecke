@@ -1,4 +1,16 @@
 ---
+title: 'Where Is the High Density in Madison? '
+author: Harald Kliems
+date: '2020-01-29'
+slug: where-is-the-high-density-in-madison
+categories: []
+tags:
+  - landuse
+  - R
+  - Madison
+  - ACS
+---
+---
 title: Population density in Madison
 author: Harald Kliems
 date: '2020-01-29'
@@ -10,6 +22,7 @@ tags:
   - R
   - leaflet
   - density
+  - ACS
 =======
 
 
@@ -104,7 +117,7 @@ pop2 %>%
             opacity = 1)
 ```
 
-You can click on each block group to see the actual value for the population density. Really high density is concentrated in a few downtown blocks adjacent to the UW-Madison campus. Oustide of downtown and the near west side, no block groups have more than 200,000 people/mi². And only a few of 100k+/mi² block groups are on the edge of town or in the suburbs. Here's the Top-10:
+You can click on each block group to see the actual value for the population density. Really high density is concentrated in a few downtown blocks adjacent to the UW-Madison campus. Oustide of downtown and the near west side, no block groups have more than 200,000 people/mi². And only a few of 100k+/mi² block groups are on the edge of town or in the suburbs. Here's the Top-10: 
 
 ```{r}
 pop2 %>% 

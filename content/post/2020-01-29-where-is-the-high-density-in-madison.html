@@ -1,0 +1,136 @@
+---
+title: 'Where Is the High Density in Madison? '
+author: Harald Kliems
+date: '2020-01-29'
+slug: where-is-the-high-density-in-madison
+categories: []
+tags:
+  - landuse
+  - R
+  - Madison
+  - ACS
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/leaflet/leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet/leaflet.js"></script>
+<link href="/rmarkdown-libs/leafletfix/leafletfix.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4-compressed.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4leaflet.js"></script>
+<link href="/rmarkdown-libs/rstudio_leaflet/rstudio_leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-binding/leaflet.js"></script>
+<script src="/rmarkdown-libs/leaflet-providers/leaflet-providers.js"></script>
+<script src="/rmarkdown-libs/leaflet-providers-plugin/leaflet-providers-plugin.js"></script>
+
+
+<hr />
+<p>title: Population density in Madison
+author: Harald Kliems
+date: ‘2020-01-29’
+slug: population-density-in-madison
+categories: []
+tags:
+- landuse
+- Madison
+- R
+- leaflet
+- density
+- ACS
+=======</p>
+<p>A recent <a href="https://www.nytimes.com/2020/01/28/arts/density-housing-skyscraper-museum.html"><em>New York Times</em> article</a> reviews a new exhibit at the Skyscraper Museum and claims that “Everything You Think You Know About Housing Is Probably Wrong.” Much of it centers around population or housing density, or the perception thereof.</p>
+<blockquote>
+<p>However you calculate it, the word “density” sounds a lot like a synonym for overcrowding and congestion, for too-tall buildings and greedy real estate developers, unwanted neighbors and lost parking spaces. Such associations make the mere mention of the term a Molotov cocktail that opponents of housing initiatives can lob at community board meetings.</p>
+</blockquote>
+<p>The exhibit then shows how these perception are often ahistorical or plain wrong: Low-income tenements in the first half of the centuries were replaced with “tower-in-the-park” public housing – which is a net lowering of density. And the densest neighborhood in many US cities are also among their wealthiest.</p>
+<p>I was curious what density would look like in Madison. Because I couldn’t easily find a map that shows this data, I used this as an excuse to work on my mapping skills in R.</p>
+<div id="getting-population-data-and-prepare-for-mapping" class="section level1">
+<h1>Getting population data and prepare for mapping</h1>
+<p>Population data at the level of the block group is available from the American Community Survey API. The <code>tidycensus</code> package provides a great interface to get the data into R. The <code>sf</code> package provides a variety of geographic functions. And <code>leaflet</code> is a mapping framework, which I’m using for the first time in R.</p>
+<pre class="r"><code>## Libraries
+library(sf)</code></pre>
+<pre><code>## Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3</code></pre>
+<pre class="r"><code>library(tidycensus)
+library(tidyverse)</code></pre>
+<pre><code>## -- Attaching packages --------------------------------------- tidyverse 1.2.1 --</code></pre>
+<pre><code>## v ggplot2 3.1.0       v purrr   0.3.2  
+## v tibble  2.1.1       v dplyr   0.8.0.1
+## v tidyr   0.8.3       v stringr 1.4.0  
+## v readr   1.3.1       v forcats 0.4.0</code></pre>
+<pre><code>## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(ggplot2)
+library(leaflet)</code></pre>
+<p>If you don’t already know the name of the population variable, you can get a list of all variables with <code>load_variables</code> and then filter through them in the RStudio table viewer interface.</p>
+<pre class="r"><code>v18 &lt;- load_variables(2018, &quot;acs5&quot;, cache = TRUE)</code></pre>
+<p>The total population variable is B01003_001. Now download the data for Dane County with <code>get_acs</code></p>
+<pre class="r"><code>pop &lt;- get_acs(geography = &quot;block group&quot;, 
+                     variables = &quot;B01003_001&quot;, 
+                     state = &quot;WI&quot;,
+                     county = &quot;Dane&quot;,
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) </code></pre>
+<pre><code>## Getting data from the 2013-2017 5-year ACS</code></pre>
+<pre><code>## Downloading feature geometry from the Census website.  To cache shapefiles for use in future sessions, set `options(tigris_use_cache = TRUE)`.</code></pre>
+<p>The <code>geometry = TRUE</code> parameter means that the dataframe will contain the polygons for each block group; <code>keep_geo_vars = TRUE</code> is useful because it means a land area variable, <code>ALAND</code> will be included. One could calculate the area from the polygons, but why expend extra effort when the Census has already done the work for you.</p>
+<pre class="r"><code>pop2 &lt;- pop %&gt;% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %&gt;%  #create variable for population density
+  drop_na</code></pre>
+<p>The <code>ALAND</code> variable is in square feet, and I converted it to the more common people per square mile metric. A quick histogram shows that the data has a strong right skew, with most block groups having very low density.</p>
+<pre class="r"><code>qplot(pop_density, data = pop2)</code></pre>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="/post/2020-01-29-where-is-the-high-density-in-madison_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>This will make a choropleth map hard to read and so I’ll focus on the block groups with more than 100,000 people/mi².</p>
+<pre class="r"><code>pop2 &lt;- pop2 %&gt;%
+  filter(pop_density &gt; 100000)</code></pre>
+</div>
+<div id="choroplet-map-with-leaflet" class="section level1">
+<h1>Choroplet map with Leaflet</h1>
+<p>Initially I tried producing maps with <code>ggmap</code>, which is a great package but better suited for static, print maps. Courtesty of Julia Silge’s <a href="https://juliasilge.com/blog/using-tidycensus/">great tutorial</a>, I was able to use <code>leaflet</code> for my map instead.</p>
+<p>First we create a stepped color palette for the map by dividing the population density values into 5 bins:</p>
+<pre class="r"><code>pal &lt;- colorBin(palette = &quot;viridis&quot;, domain = pop2$pop_density, bins = 5)</code></pre>
+<p>Then we can create the actual choropleth map:</p>
+<pre class="r"><code>pop2 %&gt;%
+  st_transform(crs = &quot;+init=epsg:4326&quot;) %&gt;% #don&#39;t fully understand
+  leaflet(width = &quot;80%&quot;) %&gt;%
+  addProviderTiles(provider = &quot;Stamen.TonerLite&quot;) %&gt;%
+  addPolygons(popup = ~ paste0(str_extract(NAME.y, &quot;^([^,]*)&quot;),
+                               &quot;&lt;br&gt;&quot;,
+                               round(pop_density, 0),
+                               &quot; people/sq mi&quot;),
+              stroke = FALSE,
+              smoothFactor = 0,
+              fillOpacity = 0.7,
+              color = ~ pal(pop_density)) %&gt;%
+  addLegend(&quot;bottomright&quot;, 
+            pal = pal, 
+            values = ~ pop_density,
+            title = &quot;Population density&quot;,
+            opacity = 1)</code></pre>
+<div class="figure"><span id="fig:unnamed-chunk-8"></span>
+<div id="htmlwidget-1" style="width:80%;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Stamen.TonerLite",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addPolygons","args":[[[[{"lng":[-89.464937,-89.463365,-89.462659,-89.455604,-89.451136,-89.451125,-89.458467,-89.460234,-89.463273,-89.463654,-89.464937],"lat":[43.074852,43.075203,43.075152,43.075332,43.075336,43.068203,43.070154,43.069988,43.068987,43.071717,43.074852]}]],[[{"lng":[-89.46842,-89.467535,-89.467475,-89.464937,-89.463654,-89.463273,-89.466287,-89.468416,-89.46842],"lat":[43.071531,43.073169,43.074295,43.074852,43.071717,43.068987,43.068198,43.068039,43.071531]}]],[[{"lng":[-89.480341,-89.475243,-89.475108,-89.471705,-89.468765,-89.470648,-89.472565,-89.475478,-89.473756,-89.47355,-89.478185,-89.479271,-89.481452,-89.480341],"lat":[43.026104,43.025958,43.024766,43.024824,43.023687,43.020507,43.015516,43.015557,43.016873,43.018836,43.021328,43.024254,43.024588,43.026104]}]],[[{"lng":[-89.4599,-89.456107,-89.455276,-89.457969,-89.456962,-89.456544,-89.453363,-89.452892,-89.452598,-89.452215,-89.450151,-89.447568,-89.448343,-89.458238,-89.461099,-89.4599],"lat":[43.031494,43.034219,43.033882,43.032491,43.03177,43.031309,43.031215,43.030303,43.029255,43.026298,43.026024,43.027216,43.025311,43.024212,43.023856,43.031494]}]],[[{"lng":[-89.426809,-89.423004,-89.413927,-89.412762,-89.42095,-89.423422,-89.426809],"lat":[43.062367,43.065102,43.067527,43.067806,43.06241,43.060814,43.062367]}]],[[{"lng":[-89.419853,-89.413563,-89.412914,-89.413901,-89.413905,-89.416743,-89.41675,-89.417828,-89.419593,-89.419853],"lat":[43.073979,43.07398,43.073569,43.073425,43.067802,43.067843,43.071802,43.073262,43.073017,43.073979]}]],[[{"lng":[-89.428636,-89.428761,-89.425115,-89.419853,-89.419593,-89.423741,-89.423783,-89.428993,-89.428636],"lat":[43.068405,43.073267,43.07351,43.073979,43.073017,43.072289,43.067919,43.067976,43.068405]}]],[[{"lng":[-89.406026,-89.4006,-89.400734,-89.400833,-89.400941,-89.405715,-89.405693,-89.406026],"lat":[43.073345,43.073266,43.072088,43.070965,43.06765,43.067719,43.072896,43.073345]}]],[[{"lng":[-89.413905,-89.413901,-89.412914,-89.412203,-89.408988,-89.406159,-89.406026,-89.405693,-89.405715,-89.408981,-89.412762,-89.413927,-89.413905],"lat":[43.067802,43.073425,43.073569,43.073496,43.073369,43.073347,43.073345,43.072896,43.067719,43.067753,43.067806,43.067527,43.067802]}]],[[{"lng":[-89.406159,-89.405957,-89.402319,-89.401951,-89.400609,-89.400583,-89.398589,-89.397281,-89.397327,-89.397376,-89.397432,-89.4006,-89.406026,-89.406159],"lat":[43.073347,43.075902,43.076558,43.076384,43.076245,43.077179,43.077237,43.077004,43.075805,43.074902,43.073221,43.073266,43.073345,43.073347]}]],[[{"lng":[-89.408981,-89.405715,-89.400941,-89.400756,-89.408994,-89.408981],"lat":[43.067753,43.067719,43.06765,43.06206,43.062059,43.067753]}]],[[{"lng":[-89.394019,-89.391896,-89.389251,-89.389714,-89.391885,-89.392006,-89.392727,-89.394032,-89.394019],"lat":[43.04902,43.048992,43.049355,43.043158,43.043059,43.041731,43.041725,43.041751,43.04902]}]],[[{"lng":[-89.397376,-89.389926,-89.391725,-89.393532,-89.393909,-89.397432,-89.397376],"lat":[43.074902,43.074758,43.073513,43.072271,43.073261,43.073221,43.074902]}]],[[{"lng":[-89.4006,-89.397432,-89.393909,-89.393532,-89.395871,-89.400734,-89.4006],"lat":[43.073266,43.073221,43.073261,43.072271,43.072013,43.072088,43.073266]}]],[[{"lng":[-89.393872,-89.391519,-89.39064,-89.389541,-89.392507,-89.393872],"lat":[43.077871,43.078915,43.0794,43.078769,43.076726,43.077871]}]],[[{"lng":[-89.392507,-89.389541,-89.386987,-89.389926,-89.392507],"lat":[43.076726,43.078769,43.07686,43.074758,43.076726]}]],[[{"lng":[-89.397327,-89.393784,-89.392507,-89.389926,-89.397376,-89.397327],"lat":[43.075805,43.075856,43.076726,43.074758,43.074902,43.075805]}]],[[{"lng":[-89.397281,-89.395479,-89.393872,-89.392507,-89.393784,-89.397327,-89.397281],"lat":[43.077004,43.077281,43.077871,43.076726,43.075856,43.075805,43.077004]}]],[[{"lng":[-89.393817,-89.388878,-89.386904,-89.391648,-89.393967,-89.393817],"lat":[43.06787,43.071361,43.069863,43.066491,43.067764,43.06787]}]],[[{"lng":[-89.393967,-89.391648,-89.386904,-89.38517,-89.384488,-89.38571,-89.387687,-89.389408,-89.390317,-89.395127,-89.393967],"lat":[43.067764,43.066491,43.069863,43.068585,43.067954,43.066451,43.066263,43.063917,43.064246,43.066998,43.067764]}]],[[{"lng":[-89.395871,-89.393532,-89.391725,-89.390872,-89.39362,-89.395905,-89.395871],"lat":[43.072013,43.072271,43.073513,43.072854,43.070906,43.070875,43.072013]}]],[[{"lng":[-89.395905,-89.39362,-89.390872,-89.388878,-89.393817,-89.395997,-89.395905],"lat":[43.070875,43.070906,43.072854,43.071361,43.06787,43.068627,43.070875]}]],[[{"lng":[-89.400833,-89.395905,-89.395997,-89.393817,-89.393967,-89.395127,-89.397362,-89.400941,-89.400833],"lat":[43.070965,43.070875,43.068627,43.06787,43.067764,43.066998,43.067638,43.06765,43.070965]}]],[[{"lng":[-89.400734,-89.395871,-89.395905,-89.400833,-89.400734],"lat":[43.072088,43.072013,43.070875,43.070965,43.072088]}]],[[{"lng":[-89.391725,-89.389926,-89.386987,-89.385215,-89.383041,-89.382173,-89.383109,-89.385268,-89.388878,-89.390872,-89.391725],"lat":[43.073513,43.074758,43.07686,43.075484,43.075426,43.074563,43.073915,43.073913,43.071361,43.072854,43.073513]}]],[[{"lng":[-89.388878,-89.385268,-89.383109,-89.381341,-89.382674,-89.382107,-89.38517,-89.386904,-89.388878],"lat":[43.071361,43.073913,43.073915,43.072541,43.071588,43.071169,43.068585,43.069863,43.071361]}]],[[{"lng":[-89.386327,-89.383942,-89.382996,-89.37871,-89.382105,-89.384029,-89.386327],"lat":[43.080611,43.081276,43.081803,43.078523,43.076133,43.078942,43.080611]}]],[[{"lng":[-89.39064,-89.387863,-89.386327,-89.384029,-89.382105,-89.383041,-89.385215,-89.386987,-89.389541,-89.39064],"lat":[43.0794,43.080563,43.080611,43.078942,43.076133,43.075426,43.075484,43.07686,43.078769,43.0794]}]],[[{"lng":[-89.378534,-89.375797,-89.373149,-89.372105,-89.370259,-89.365309,-89.376196,-89.378534],"lat":[43.08623,43.088609,43.093529,43.09622,43.095001,43.092216,43.084437,43.08623]}]],[[{"lng":[-89.381793,-89.378534,-89.376196,-89.37797,-89.375146,-89.37871,-89.382996,-89.381793],"lat":[43.082766,43.08623,43.084437,43.083202,43.081047,43.078523,43.081803,43.082766]}]],[[{"lng":[-89.370068,-89.369522,-89.368194,-89.367891,-89.365344,-89.365291,-89.364376,-89.364008,-89.364063,-89.364103,-89.363887,-89.363599,-89.363432,-89.363585,-89.365309,-89.370259,-89.370068],"lat":[43.095466,43.097046,43.097049,43.097504,43.101306,43.101388,43.10274,43.102926,43.100116,43.097766,43.09706,43.09653,43.095943,43.091282,43.092216,43.095001,43.095466]}]],[[{"lng":[-89.365265,-89.358139,-89.357056,-89.358166,-89.356078,-89.353703,-89.357365,-89.361122,-89.363534,-89.365265],"lat":[43.081327,43.086368,43.087086,43.088243,43.087135,43.085527,43.082541,43.080792,43.080046,43.081327]}]],[[{"lng":[-89.361973,-89.352478,-89.349124,-89.350579,-89.350794,-89.351463,-89.355206,-89.358166,-89.361973],"lat":[43.090334,43.097233,43.099748,43.097867,43.092951,43.092808,43.09202,43.088243,43.090334]}]],[[{"lng":[-89.471623,-89.465502,-89.465089,-89.46298,-89.469223,-89.47159,-89.471623],"lat":[43.118782,43.119134,43.11383,43.111912,43.111912,43.111796,43.118782]}]]],null,null,{"interactive":true,"className":"","stroke":false,"color":["#440154","#440154","#440154","#440154","#440154","#443A83","#443A83","#443A83","#443A83","#440154","#440154","#440154","#21908D","#21908D","#31688E","#31688E","#21908D","#35B779","#443A83","#440154","#21908D","#443A83","#443A83","#FDE725","#440154","#443A83","#443A83","#443A83","#440154","#440154","#440154","#440154","#440154","#440154"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#440154","#440154","#440154","#440154","#440154","#443A83","#443A83","#443A83","#443A83","#440154","#440154","#440154","#21908D","#21908D","#31688E","#31688E","#21908D","#35B779","#443A83","#440154","#21908D","#443A83","#443A83","#FDE725","#440154","#443A83","#443A83","#443A83","#440154","#440154","#440154","#440154","#440154","#440154"],"fillOpacity":0.7,"smoothFactor":0,"noClip":false},["Block Group 1<br>106312 people/sq mi","Block Group 4<br>112331 people/sq mi","Block Group 5<br>135264 people/sq mi","Block Group 2<br>128611 people/sq mi","Block Group 2<br>109842 people/sq mi","Block Group 1<br>236953 people/sq mi","Block Group 3<br>226630 people/sq mi","Block Group 1<br>246801 people/sq mi","Block Group 2<br>204244 people/sq mi","Block Group 1<br>125444 people/sq mi","Block Group 4<br>137703 people/sq mi","Block Group 4<br>100747 people/sq mi","Block Group 1<br>627955 people/sq mi","Block Group 2<br>749637 people/sq mi","Block Group 1<br>495672 people/sq mi","Block Group 2<br>430858 people/sq mi","Block Group 3<br>662878 people/sq mi","Block Group 4<br>907845 people/sq mi","Block Group 1<br>369497 people/sq mi","Block Group 2<br>148478 people/sq mi","Block Group 1<br>688710 people/sq mi","Block Group 2<br>326882 people/sq mi","Block Group 3<br>201220 people/sq mi","Block Group 4<br>1307631 people/sq mi","Block Group 1<br>193826 people/sq mi","Block Group 2<br>257645 people/sq mi","Block Group 2<br>249647 people/sq mi","Block Group 3<br>247200 people/sq mi","Block Group 1<br>101311 people/sq mi","Block Group 2<br>157328 people/sq mi","Block Group 2<br>162095 people/sq mi","Block Group 2<br>116819 people/sq mi","Block Group 5<br>105067 people/sq mi","Block Group 6<br>102448 people/sq mi"],null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addLegend","args":[{"colors":["#440154","#443A83","#31688E","#21908D","#35B779","#8FD644","#FDE725"],"labels":["0 &ndash; 200,000","200,000 &ndash; 400,000","400,000 &ndash; 600,000","600,000 &ndash; 800,000","800,000 &ndash; 1,000,000","1,000,000 &ndash; 1,200,000","1,200,000 &ndash; 1,400,000"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"bin","title":"Population density","extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[43.015516,43.119134],"lng":[-89.481452,-89.349124]}},"evals":[],"jsHooks":[]}</script>
+<p class="caption">
+Figure 1: Population in density in Madison (WI) by Census block group. Block groups with less than 100k people/mi² excluded.
+</p>
+</div>
+<p>You can click on each block group to see the actual value for the population density. Really high density is concentrated in a few downtown blocks adjacent to the UW-Madison campus. Oustide of downtown and the near west side, no block groups have more than 200,000 people/mi². And only a few of 100k+/mi² block groups are on the edge of town or in the suburbs. Here’s the Top-10:</p>
+<pre class="r"><code>pop2 %&gt;% 
+  st_set_geometry(NULL) %&gt;% #remove geometry
+  arrange(desc(pop_density)) %&gt;% 
+  select(pop_density, NAME.y) %&gt;% 
+  head(10)</code></pre>
+<pre><code>##    pop_density                                                    NAME.y
+## 1    1307630.8 Block Group 4, Census Tract 16.06, Dane County, Wisconsin
+## 2     907845.4 Block Group 4, Census Tract 16.04, Dane County, Wisconsin
+## 3     749637.2 Block Group 2, Census Tract 16.03, Dane County, Wisconsin
+## 4     688710.4 Block Group 1, Census Tract 16.06, Dane County, Wisconsin
+## 5     662878.1 Block Group 3, Census Tract 16.04, Dane County, Wisconsin
+## 6     627955.4 Block Group 1, Census Tract 16.03, Dane County, Wisconsin
+## 7     495672.5 Block Group 1, Census Tract 16.04, Dane County, Wisconsin
+## 8     430858.4 Block Group 2, Census Tract 16.04, Dane County, Wisconsin
+## 9     369496.6 Block Group 1, Census Tract 16.05, Dane County, Wisconsin
+## 10    326882.1 Block Group 2, Census Tract 16.06, Dane County, Wisconsin</code></pre>
+<p>I’ll explore some of these block in more detail in a later post.</p>
+</div>

@@ -6,10 +6,20 @@
     <description>Recent content in Posts on Harald&#39;s Datenecke</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 26 Jan 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 29 Jan 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Where Is the High Density in Madison? </title>
+      <link>/2020/01/29/where-is-the-high-density-in-madison/</link>
+      <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/01/29/where-is-the-high-density-in-madison/</guid>
+      <description>title: Population density in Madisonauthor: Harald Kliemsdate: ‘2020-01-29’slug: population-density-in-madisoncategories: []tags:- landuse- Madison- R- leaflet- density- ACS=======
+A recent New York Times article reviews a new exhibit at the Skyscraper Museum and claims that “Everything You Think You Know About Housing Is Probably Wrong.” Much of it centers around population or housing density, or the perception thereof.</description>
+    </item>
     
     <item>
       <title>Bike counts, temperature, and precipitation in Madison (Wis.)</title>
