@@ -3,38 +3,67 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/2020/01/26/bike-counts-temperature-and-precipitation-in-madison-wis/</loc>
-    <lastmod>2020-01-26T00:00:00+00:00</lastmod>
+    <loc>/tags/acs/</loc>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/</loc>
-    <lastmod>2020-01-26T00:00:00+00:00</lastmod>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/madison/</loc>
-    <lastmod>2020-01-26T00:00:00+00:00</lastmod>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/post/</loc>
-    <lastmod>2020-01-26T00:00:00+00:00</lastmod>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/r/</loc>
-    <lastmod>2020-01-26T00:00:00+00:00</lastmod>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/</loc>
-    <lastmod>2020-01-26T00:00:00+00:00</lastmod>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/2020/01/29/where-is-the-high-density-in-madison/</loc>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/landuse/</loc>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/leaflet/</loc>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/tidycensus/</loc>
+    <lastmod>2020-01-29T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/2020/01/26/bike-counts-temperature-and-precipitation-in-madison-wis/</loc>
+    <lastmod>2020-01-26T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -46,12 +75,6 @@
   <url>
     <loc>/2019/06/25/some-further-zoning-analyses-for-madison/</loc>
     <lastmod>2019-06-25T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/tags/landuse/</loc>
-    <lastmod>2019-06-25T00:00:00+00:00</lastmod>
-    <priority>0</priority>
   </url>
   
   <url>

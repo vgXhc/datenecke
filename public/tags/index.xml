@@ -6,15 +6,24 @@
     <description>Recent content in Tags on Harald&#39;s Datenecke</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 26 Jan 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 29 Jan 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
+      <title>ACS</title>
+      <link>/tags/acs/</link>
+      <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/acs/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Madison</title>
       <link>/tags/madison/</link>
-      <pubDate>Sun, 26 Jan 2020 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
       
       <guid>/tags/madison/</guid>
       <description></description>
@@ -23,9 +32,36 @@
     <item>
       <title>R</title>
       <link>/tags/r/</link>
-      <pubDate>Sun, 26 Jan 2020 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
       
       <guid>/tags/r/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>landuse</title>
+      <link>/tags/landuse/</link>
+      <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/landuse/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>leaflet</title>
+      <link>/tags/leaflet/</link>
+      <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/leaflet/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>tidycensus</title>
+      <link>/tags/tidycensus/</link>
+      <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/tidycensus/</guid>
       <description></description>
     </item>
     
@@ -35,15 +71,6 @@
       <pubDate>Sun, 26 Jan 2020 00:00:00 +0000</pubDate>
       
       <guid>/tags/bikes/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>landuse</title>
-      <link>/tags/landuse/</link>
-      <pubDate>Tue, 25 Jun 2019 00:00:00 +0000</pubDate>
-      
-      <guid>/tags/landuse/</guid>
       <description></description>
     </item>
     
