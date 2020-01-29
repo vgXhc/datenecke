@@ -10,7 +10,8 @@ tags:
   - R
   - leaflet
   - density
----
+=======
+
 
 A recent [*New York Times* article](https://www.nytimes.com/2020/01/28/arts/density-housing-skyscraper-museum.html) reviews a new exhibit at the Skyscraper Museum and claims that "Everything You Think You Know About Housing Is Probably Wrong." Much of it centers around population or housing density, or the perception thereof. 
 
