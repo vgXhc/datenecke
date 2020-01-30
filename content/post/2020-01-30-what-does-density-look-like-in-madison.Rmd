@@ -1,0 +1,69 @@
+---
+title: What Does Density Look Like in Madison?
+author: Harald Kliems
+date: '2020-01-30'
+slug: what-does-density-look-like-in-madison
+categories: []
+tags:
+  - landuse
+  - Madison
+  - R
+draft: true  
+---
+This is a follow-up to my previous post on *where* Madison is most dense. But what do these dense areas look like? Inspired by the ["Every Lot" bot]( http://fakeisthenewreal.org/everylot/), I'll use the Google Street View API via the `googleway` package to (hopefully) create some visual sense of density. 
+```{r}
+## Code from previous post to get 10 most dense block groups in Dane County
+library(sf)
+library(tidycensus)
+library(tidyverse)
+library(ggplot2)
+library(leaflet)
+library(googleway)
+key <- Sys.getenv("STREET_VIEW_API_KEY") #key requires a credit card on file
+
+pop <- get_acs(geography = "block group", 
+                     variables = "B01003_001", 
+                     state = "WI",
+                     county = "Dane",
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE)
+pop2 <- pop %>% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %>%  #create variable for population density
+  drop_na %>%
+  filter(pop_density > 100000) %>% 
+  arrange(desc(pop_density))                     
+```
+
+A good starting point for exploration would be the [centroid](https://en.wikipedia.org/wiki/Centroid#Of_a_polygon) of the block group. Block groups can have odd shapes, though, which can lead to the true centroid ending up outside the polygon. I'll use `st_point_on_surface` instead.
+
+```{r}
+pop2 <- pop2 %>% 
+  mutate(center = st_point_on_surface(geometry))
+```
+A quick visual check:
+```{r}
+library(ggmap)
+ggplot() +
+  geom_sf(data = pop2,
+          aes(fill = pop_density), 
+          alpha = 0.5,
+          color = NA) +
+  geom_sf(data = pop2,
+          aes(geometry = center))
+```
+Looks good! Now let's get Street View images. Testing with the first row:
+
+```{r}
+google_streetview(location = st_coordinates(pop2$center[1]),
+    size = c(400,400), output = "plot",
+    key = key)
+```
+"No imagery here" -- that's because lat/long are in the reverse order! 
+```{r}
+centers <- st_coordinates(pop2$center)
+centers2 <- centers[, rev(seq_len(ncol(centers)))]
+google_streetview(location = centers2[1,],
+    size = c(400,400), output = "plot",
+    key = key)
+```
+
