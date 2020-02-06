@@ -1,7 +1,7 @@
 ---
 title: What Does Density Look Like in Madison?
 author: Harald Kliems
-date: '2020-01-30'
+date: '2020-02-06'
 slug: what-does-density-look-like-in-madison
 categories: []
 tags:
@@ -9,6 +9,7 @@ tags:
   - Madison
   - R
   - Google Street View
+draft: false
 ---
 
 This is a follow-up to my previous post on *where* Madison is most dense. But what do these dense areas look like? Inspired by the ["Every Lot" bot]( http://fakeisthenewreal.org/everylot/), I'll use the [static Google Street View API](https://developers.google.com/maps/documentation/streetview/intro) via the `googleway` package to (hopefully) create some visual sense of density. 
