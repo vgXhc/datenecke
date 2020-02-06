@@ -81,7 +81,7 @@ Still no luck. What apparently is going on is that there is no Street View image
 
 The first option is easier to implement and I'll try it out first. This [XKCD comic](https://www.explainxkcd.com/wiki/index.php/2170:_Coordinate_Precision) helps figure out how much rounding is needed:
 
-![XKCD comic on coordinate precision(https://www.explainxkcd.com/wiki/images/8/88/coordinate_precision.png)
+![XKCD comic on coordinate precision](https://www.explainxkcd.com/wiki/images/8/88/coordinate_precision.png)
 
 "A specific suburban cul-de-sac"-level accuracy with 3 digits sounds good.
 

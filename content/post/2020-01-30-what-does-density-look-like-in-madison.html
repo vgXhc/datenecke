@@ -20,19 +20,17 @@ library(sf)
 ## Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3
 library(tidycensus)
 library(tidyverse)
-## -- Attaching packages ---------------------------------- tidyverse 1.2.1 --
-## v ggplot2 3.2.1     v purrr   0.3.3
-## v tibble  2.1.3     v dplyr   0.8.3
-## v tidyr   1.0.0     v stringr 1.4.0
-## v readr   1.3.1     v forcats 0.4.0
-## -- Conflicts ------------------------------------- tidyverse_conflicts() --
+## -- Attaching packages --------------------------------------- tidyverse 1.2.1 --
+## v ggplot2 3.1.0       v purrr   0.3.2  
+## v tibble  2.1.1       v dplyr   0.8.0.1
+## v tidyr   0.8.3       v stringr 1.4.0  
+## v readr   1.3.1       v forcats 0.4.0
+## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()
 library(ggplot2)
 library(leaflet)
-## Warning: package &#39;leaflet&#39; was built under R version 3.6.2
 library(googleway)
-## Warning: package &#39;googleway&#39; was built under R version 3.6.2
 key &lt;- Sys.getenv(&quot;STREET_VIEW_API_KEY&quot;) #key requires a credit card on file
 
 pop &lt;- get_acs(geography = &quot;block group&quot;, 
@@ -84,7 +82,10 @@ pop2 &lt;- pop %&gt;%
 <li>reverse-geocode the coordinates with something like the Census Geocoder to obtain street addresses</li>
 </ul>
 <p>The first option is easier to implement and I’ll try it out first. This <a href="https://www.explainxkcd.com/wiki/index.php/2170:_Coordinate_Precision">XKCD comic</a> helps figure out how much rounding is needed:</p>
-<p>![XKCD comic on coordinate precision(<a href="https://www.explainxkcd.com/wiki/images/8/88/coordinate_precision.png" class="uri">https://www.explainxkcd.com/wiki/images/8/88/coordinate_precision.png</a>)</p>
+<div class="figure">
+<img src="https://www.explainxkcd.com/wiki/images/8/88/coordinate_precision.png" alt="XKCD comic on coordinate precision" />
+<p class="caption">XKCD comic on coordinate precision</p>
+</div>
 <p>“A specific suburban cul-de-sac”-level accuracy with 3 digits sounds good.</p>
 <pre class="r"><code>google_streetview(location =  round(c(st_coordinates(pop2$center[1])[2],
                                 st_coordinates(pop2$center[1])[1]), 3),
@@ -158,5 +159,5 @@ pop2 &lt;- pop %&gt;%
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
-<p>Static Street View images of a single location in a block group don’t tell the whole story of density. But they do provide a nice snapshot of the built form in the dense parts of Madison: Pretty much all of the buildings you can see cater primarily to UW-Madison students, but they take on different forms. You have freestanding historic multiplexes with probably 3-10 units (BG 1, tract 16.05) that may once have been large single-family homes; generic 3-5 story apartment buildings from the second half of the 20th century; and then mid- and high-rise buildings, either built as residence halls by the university (e.g. <a href="https://www.housing.wisc.edu/residence-halls/witte/">Witte Hall</a> with over 1200 units in the densest block group) or as private development (e.g. <a href="https://lucky.stevebrownapts.com/">Lucky Apartments</a> in the third-densest block group). Block group 1 in tract 16.06 does a great job of showing all of these building types in one shot.</p>
+<p>Static Street View images of a single location in a block group don’t tell the whole story of density. But they do provide a nice snapshot of the built form in the dense parts of Madison: Pretty much all of the buildings you can see cater primarily to UW-Madison students, but they take on different forms. You have freestanding historic multiplexes with probably 3-10 units (BG 1, tract 16.05) that may once have been large single-family homes; generic 3-5 story apartment buildings from the second half of the 20th century; and then mid- and high-rise buildings, either built as residence halls by the university (e.g. <a href="https://www.housing.wisc.edu/residence-halls/witte/">Witte Hall</a> with over 1200 units in the densest block group) or as private development (e.g. <a href="https://lucky.stevebrownapts.com/">Lucky Apartments</a> in the third-densest block group). Block group 1 in tract 16.06 does a great job of showing all of these building types in one shot.</p>
 </div>
