@@ -43,13 +43,11 @@ pop2 <- pop2 %>%
 A quick visual check:
 ```{r}
 library(ggmap)
-ggplot() +
-  geom_sf(data = pop2,
-          aes(fill = pop_density), 
+ggplot(data = pop2) +
+  geom_sf(aes(fill = pop_density), 
           alpha = 0.5,
           color = NA) +
-  geom_sf(data = pop2,
-          aes(geometry = center))
+  geom_sf(aes(geometry = center))
 ```
 Looks good! Now let's get Street View images. Testing with the first row:
 
@@ -58,12 +56,55 @@ google_streetview(location = st_coordinates(pop2$center[1]),
     size = c(400,400), output = "plot",
     key = key)
 ```
-"No imagery here" -- that's because lat/long are in the reverse order! 
+"No imagery here" -- that's because lat/lon are in the reverse order! I'll fix this, and in order to save API calls I'll also turn on the `response_check` option in `google_streetview`
 ```{r}
-centers <- st_coordinates(pop2$center)
-centers2 <- centers[, rev(seq_len(ncol(centers)))]
-google_streetview(location = centers2[1,],
-    size = c(400,400), output = "plot",
+google_streetview(location =  c(st_coordinates(pop2$center[1])[2],
+                                st_coordinates(pop2$center[1])[1]),
+    size = c(400,400), 
+    output = "plot",
+    response_check = TRUE,
     key = key)
 ```
+Still no luck. What apparently is going on is that there is no Street View imagery at the *exact* coordinates -- which isn't too surprising that the coordinates are just some point inside a block group and not necessarily on or near a street. The Every Lot project doesn't have this issue, as per definition a lot has a street address. A couple ideas to resolve the problem:
+
+* rounding the coordinates to a less precise location may make this more forgiving
+* reverse-geocode the coordinates with something like the Census Geocoder to obtain street addresses
+
+The first option is easier to implement and I'll try it out first. This [XKCD comic](https://www.explainxkcd.com/wiki/index.php/2170:_Coordinate_Precision) helps figure out how much rounding is needed:
+
+![XKCD comic on coordinate precision(https://www.explainxkcd.com/wiki/images/8/88/coordinate_precision.png)
+
+"A specific suburban cul-de-sac"-level accuracy with 3 digits sounds good.
+
+```{r}
+google_streetview(location =  round(c(st_coordinates(pop2$center[1])[2],
+                                st_coordinates(pop2$center[1])[1]), 3),
+    size = c(1000,400), 
+    fov = 120,
+    output = "plot",
+    response_check = TRUE,
+    key = key)
+```
+Great, it works! I also adjusted the `fov` (field of view) to 120 degrees in order to get as much context as possible in the image.
+
+```{r}
+# markers and paths are easy to access
+d <- function(x=-95.36, y=29.76, n,r,a){
+  round(data.frame(
+    lon = jitter(rep(x,n), amount = a),
+    lat = jitter(rep(y,n), amount = a)
+  ), digits = r)
+}
+df <- d(n=50,r=3,a=.3)
+map <- get_googlemap(markers = df, path = df, scale = 2, key = key)
+ggmap(map)
+ggmap(map, extent = "device") +
+  geom_point(aes(x = lon, y = lat), data = df, size = 3, colour = "black") +
+  geom_path(aes(x = lon, y = lat), data = df)
+
+
+ggmap(get_googlemap(center = c(43.071489,-89.3983367307066), color = "bw", scale = 2, key = key), extent = "device")
+```
+
+
 
