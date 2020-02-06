@@ -6,10 +6,20 @@
     <description>Recent content on Harald&#39;s Datenecke</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 29 Jan 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 30 Jan 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>What Does Density Look Like in Madison?</title>
+      <link>/2020/01/30/what-does-density-look-like-in-madison/</link>
+      <pubDate>Thu, 30 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/01/30/what-does-density-look-like-in-madison/</guid>
+      <description>This is a follow-up to my previous post on where Madison is most dense. But what do these dense areas look like? Inspired by the “Every Lot” bot, I’ll use the static Google Street View API via the googleway package to (hopefully) create some visual sense of density.
+## Code from previous post to get 10 most dense block groups in Dane Countylibrary(sf)## Linking to GEOS 3.6.1, GDAL 2.</description>
+    </item>
     
     <item>
       <title>Where Is the High Density in Madison? </title>
