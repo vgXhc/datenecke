@@ -8,10 +8,11 @@ tags:
   - landuse
   - Madison
   - R
-draft: true  
+  - Google Street View
 ---
-This is a follow-up to my previous post on *where* Madison is most dense. But what do these dense areas look like? Inspired by the ["Every Lot" bot]( http://fakeisthenewreal.org/everylot/), I'll use the Google Street View API via the `googleway` package to (hopefully) create some visual sense of density. 
-```{r}
+
+This is a follow-up to my previous post on *where* Madison is most dense. But what do these dense areas look like? Inspired by the ["Every Lot" bot]( http://fakeisthenewreal.org/everylot/), I'll use the [static Google Street View API](https://developers.google.com/maps/documentation/streetview/intro) via the `googleway` package to (hopefully) create some visual sense of density. 
+```{r results='hide', collapse = TRUE}
 ## Code from previous post to get 10 most dense block groups in Dane County
 library(sf)
 library(tidycensus)
@@ -31,7 +32,8 @@ pop2 <- pop %>%
   mutate(pop_density = estimate / (ALAND /27878400)) %>%  #create variable for population density
   drop_na %>%
   filter(pop_density > 100000) %>% 
-  arrange(desc(pop_density))                     
+  arrange(desc(pop_density)) %>% 
+  head(10)
 ```
 
 A good starting point for exploration would be the [centroid](https://en.wikipedia.org/wiki/Centroid#Of_a_polygon) of the block group. Block groups can have odd shapes, though, which can lead to the true centroid ending up outside the polygon. I'll use `st_point_on_surface` instead.
@@ -40,6 +42,7 @@ A good starting point for exploration would be the [centroid](https://en.wikiped
 pop2 <- pop2 %>% 
   mutate(center = st_point_on_surface(geometry))
 ```
+
 A quick visual check:
 ```{r}
 library(ggmap)
@@ -49,14 +52,18 @@ ggplot(data = pop2) +
           color = NA) +
   geom_sf(aes(geometry = center))
 ```
-Looks good! Now let's get Street View images. Testing with the first row:
+
+Looks good! Turns out that ten densest block groups form one contiguous area. Now let's get Street View images. Testing with the first row:
 
 ```{r}
 google_streetview(location = st_coordinates(pop2$center[1]),
     size = c(400,400), output = "plot",
     key = key)
 ```
+
 "No imagery here" -- that's because lat/lon are in the reverse order! I'll fix this, and in order to save API calls I'll also turn on the `response_check` option in `google_streetview`
+
+
 ```{r}
 google_streetview(location =  c(st_coordinates(pop2$center[1])[2],
                                 st_coordinates(pop2$center[1])[1]),
@@ -65,6 +72,7 @@ google_streetview(location =  c(st_coordinates(pop2$center[1])[2],
     response_check = TRUE,
     key = key)
 ```
+
 Still no luck. What apparently is going on is that there is no Street View imagery at the *exact* coordinates -- which isn't too surprising that the coordinates are just some point inside a block group and not necessarily on or near a street. The Every Lot project doesn't have this issue, as per definition a lot has a street address. A couple ideas to resolve the problem:
 
 * rounding the coordinates to a less precise location may make this more forgiving
@@ -85,26 +93,80 @@ google_streetview(location =  round(c(st_coordinates(pop2$center[1])[2],
     response_check = TRUE,
     key = key)
 ```
+
 Great, it works! I also adjusted the `fov` (field of view) to 120 degrees in order to get as much context as possible in the image.
 
+Time to pack this into a function and get images for the top-10 densest block groups.
+
 ```{r}
-# markers and paths are easy to access
-d <- function(x=-95.36, y=29.76, n,r,a){
-  round(data.frame(
-    lon = jitter(rep(x,n), amount = a),
-    lat = jitter(rep(y,n), amount = a)
-  ), digits = r)
+
+get_sv <- function(x) {
+  print(paste0("Block Group ", pop2$BLKGRPCE[x], " in Census Tract ", pop2$TRACTCE[x], " has a population density of ", round(pop2$pop_density[x], 0), " people per square mile and it looks like so:"))
+  google_streetview(location =  round(c(st_coordinates(pop2$center[x])[2],
+                                st_coordinates(pop2$center[x])[1]), 3),
+    size = c(1000,400), 
+    fov = 120,
+    output = "plot",
+    response_check = TRUE,
+    key = key)
 }
-df <- d(n=50,r=3,a=.3)
-map <- get_googlemap(markers = df, path = df, scale = 2, key = key)
-ggmap(map)
-ggmap(map, extent = "device") +
-  geom_point(aes(x = lon, y = lat), data = df, size = 3, colour = "black") +
-  geom_path(aes(x = lon, y = lat), data = df)
-
-
-ggmap(get_googlemap(center = c(43.071489,-89.3983367307066), color = "bw", scale = 2, key = key), extent = "device")
 ```
+
+## 10th-densest block group: Block Group 2, Census Tract 16.06
+
+```{r echo = FALSE}
+get_sv(10)
+```
+
+## 9th-densest: Block Group 1, Census Tract 16.05
+
+```{r echo = FALSE}
+get_sv(9)
+```
+
+
+## 8th-densest: Block Group 2, Census Tract 16.04
+```{r echo = FALSE}
+get_sv(8)
+```
+
+## 7-th densest: Block Group 1, Census Tract 16.04
+```{r echo = FALSE}
+get_sv(7)
+```
+
+## 6th-densest: Block Group 1, Census Tract 16.03
+```{r echo = FALSE}
+get_sv(6)
+```
+
+## 5th-densest: Block Group 3, Census Tract 16.04
+```{r echo = FALSE}
+get_sv(5)
+```
+
+## 4th-densest: Block Group 1, Census Tract 16.06
+```{r echo = FALSE}
+get_sv(4)
+```
+
+## 3rd-densest: Block Group 2, Census Tract 16.03
+```{r echo = FALSE}
+get_sv(3)
+```
+
+## 2nd-densest: Block Group 4, Census Tract 16.04
+```{r echo = FALSE}
+get_sv(2)
+```
+
+## The densest of them all: Block Group 4, Census Tract 16.06
+```{r echo = FALSE}
+get_sv(1)
+```
+
+## Conclusion
+Static Street View images of a single location in a block group don't tell the whole story of density. But they do provide a nice snapshot of the built form in the dense parts of Madison: Pretty much all of the buildings you can see cater primarily to UW-Madison students, but they take on different forms. You have freestanding historic multiplexes with probably 3-10 units (BG 1, tract 16.05) that may once have been large single-family homes; generic 3-5 story apartment buildings from the second half of the 20th century; and then mid- and high-rise buildings, either built as residence halls by the university (e.g. [Witte Hall](https://www.housing.wisc.edu/residence-halls/witte/) with over 1200 units in the densest block group) or as private development (e.g. [Lucky Apartments](https://lucky.stevebrownapts.com/) in the third-densest block group). Block group 1 in tract 16.06 does a great job of showing all of these building types in one shot.
 
 
 
