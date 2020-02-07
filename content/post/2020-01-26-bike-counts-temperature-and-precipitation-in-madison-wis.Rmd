@@ -155,6 +155,8 @@ dupes2 %>%
   geom_point(alpha = 0.2)
 ```
 
+
+
 ### Zero-counts
 It's a little hard to see what's going, but clearly the point in the lower right corner is problematic: Over 500 consecutive hours, or 21 days, of 0 counts indicates that one of the counters must have been offline. I'll filter out this point for now so that it's easier to see what is going on with the other points.
 
@@ -242,3 +244,23 @@ counts3
 
 Alright, that's it for the data cleaning and quality control. In the next post, I'll present some exploratory plots.
 
+*Edit 2020-02-07*
+After publishing this post, I got [great feedback](https://github.com/vgXhc/datenecke/issues/1) on how to better handle the run length encoding and then getting back to the runs in the original dataset. This relies on the `rleid` function from the `data.table` package. Much more elegant! Thanks, [Jean-Marie Pivette](https://github.com/JMPivette)! 
+
+```{r}
+library(data.table)
+
+counts2 %>% 
+  group_by(grp = rleid(Count), 
+           location) %>% 
+  summarise(start_date = first(Count_Date),
+            duration = n(),
+            Count = first(Count)) %>% 
+  filter(duration  >= 25 & Count == 0)
+```
+
+JP also has good suggestions on additional data quality checks. I won't implement these for now but it's a good reference.
+
+```{r echo=FALSE}
+blogdown::shortcode('tweet', '1222289124889169922')
+```

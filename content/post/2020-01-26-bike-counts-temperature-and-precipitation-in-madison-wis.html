@@ -300,4 +300,33 @@ counts3</code></pre>
 ## 10 2015-06-23 20:00:00   173 Cap City at North Shore Tue       weekday   
 ## # ... with 78,398 more rows</code></pre>
 <p>Alright, that’s it for the data cleaning and quality control. In the next post, I’ll present some exploratory plots.</p>
+<p><em>Edit 2020-02-07</em>
+After publishing this post, I got <a href="https://github.com/vgXhc/datenecke/issues/1">great feedback</a> on how to better handle the run length encoding and then getting back to the runs in the original dataset. This relies on the <code>rleid</code> function from the <code>data.table</code> package. Much more elegant! Thanks, <a href="https://github.com/JMPivette">Jean-Marie Pivette</a>!</p>
+<pre class="r"><code>library(data.table)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;data.table&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:lubridate&#39;:
+## 
+##     hour, isoweek, mday, minute, month, quarter, second, wday,
+##     week, yday, year</code></pre>
+<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
+## 
+##     between, first, last</code></pre>
+<pre><code>## The following object is masked from &#39;package:purrr&#39;:
+## 
+##     transpose</code></pre>
+<pre class="r"><code>counts2 %&gt;% 
+  group_by(grp = rleid(Count), 
+           location) %&gt;% 
+  summarise(start_date = first(Count_Date),
+            duration = n(),
+            Count = first(Count)) %&gt;% 
+  filter(duration  &gt;= 25 &amp; Count == 0)</code></pre>
+<pre><code>## # A tibble: 1 x 5
+## # Groups:   grp [1]
+##     grp location                start_date          duration Count
+##   &lt;int&gt; &lt;fct&gt;                   &lt;dttm&gt;                 &lt;int&gt; &lt;int&gt;
+## 1 29975 Cap City at North Shore 2019-02-18 15:00:00      525     0</code></pre>
+<p>JP also has good suggestions on additional data quality checks. I won’t implement these for now but it’s a good reference.</p>
+{{% tweet "1222289124889169922" %}}
 </div>
