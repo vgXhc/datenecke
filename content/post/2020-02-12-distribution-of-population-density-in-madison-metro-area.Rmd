@@ -1,0 +1,87 @@
+---
+title: Distribution of Population Density in Madison Metro Area
+author: Harald Kliems
+date: '2020-02-12'
+slug: distribution-of-population-density-in-madison-metro-area
+categories: []
+tags:
+  - ACS
+  - landuse
+  - R
+  - tidycensus
+  - StreetLight
+draft: true
+---
+
+```{r}
+## Libraries
+library(sf)
+library(tidycensus)
+library(tidyverse)
+library(ggplot2)
+library(leaflet)
+```
+
+
+```{r results='hide'}
+madison_pop <- get_acs(geography = "tract", 
+                     variables = "B01003_001", 
+                     state = "WI",
+                     county = c("Dane", "Columbia", "Green County", "Iowa"),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %>% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %>% 
+  st_drop_geometry()
+
+sf_pop <- get_acs(geography = "tract", 
+                     variables = "B01003_001", 
+                     state = "CA",
+                     county = c("Alameda", "Contra Costa", "San Francisco", "San Mateo", "Marin"),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %>% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %>% 
+  st_drop_geometry()
+
+mke_pop <- get_acs(geography = "tract", 
+                     variables = "B01003_001", 
+                     state = "WI",
+                     county = c("Milwaukee", "Waukesha", "Washington", "Ozaukee"),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %>% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %>% 
+  st_drop_geometry()
+
+phx_pop <- get_acs(geography = "tract", 
+                     variables = "B01003_001", 
+                     state = "AZ",
+                     county = c("Maricopa", "Pinal"),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %>% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %>% 
+  st_drop_geometry()
+
+pop <- bind_rows("Madison" = madison_pop, 
+                 "San Francisco" = sf_pop, 
+                 "Milwaukee" = mke_pop, 
+                 "Phoenix" = phx_pop,
+                 .id = "metro") %>% 
+  drop_na
+
+  
+```
+
+```{r}
+pop %>% 
+  ggplot(aes(pop_density, color = metro)) +
+  geom_density(adjust = 1/2) +
+  scale_x_log10()
+
+pop %>% 
+  ggplot(aes(metro, pop_density)) +
+  geom_violin() +
+  scale_y_log10() +
+  labs(title = "Distribution of population density by Census tract in four metro areas",
+       y = "Population density (People/sq mi)",
+       x = element_blank())
+```
+
