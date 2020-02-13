@@ -19,7 +19,6 @@ library(sf)
 library(tidycensus)
 library(tidyverse)
 library(ggplot2)
-library(leaflet)
 ```
 
 
@@ -51,6 +50,27 @@ mke_pop <- get_acs(geography = "tract",
   mutate(pop_density = estimate / (ALAND /27878400)) %>% 
   st_drop_geometry()
 
+dal_pop <- get_acs(geography = "tract", 
+                     variables = "B01003_001", 
+                     state = "TX",
+                     county = c("Dallas",
+                                "Tarrant",
+                                "Collin County",
+                                "Denton",
+                                "Ellis",
+                                "Johnson",
+                                "Parker",
+                                "Kaufman",
+                                "Rockwall",
+                                "Hunt",
+                                "Wise",
+                                "Hood",
+                                "Somervell"),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %>% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %>% 
+  st_drop_geometry()
+
 phx_pop <- get_acs(geography = "tract", 
                      variables = "B01003_001", 
                      state = "AZ",
@@ -64,6 +84,7 @@ pop <- bind_rows("Madison" = madison_pop,
                  "San Francisco" = sf_pop, 
                  "Milwaukee" = mke_pop, 
                  "Phoenix" = phx_pop,
+                 "Dallas" = dal_pop,
                  .id = "metro") %>% 
   drop_na
 
@@ -71,15 +92,19 @@ pop <- bind_rows("Madison" = madison_pop,
 ```
 
 ```{r}
+library(scales)
 pop %>% 
   ggplot(aes(pop_density, color = metro)) +
   geom_density(adjust = 1/2) +
   scale_x_log10()
 
 pop %>% 
+  group_by(metro) %>% 
+  fct_reorder(.metro, .pop_density, .fun = median) %>% 
   ggplot(aes(metro, pop_density)) +
   geom_violin() +
-  scale_y_log10() +
+  geom_boxplot(width = 0.1) +
+  scale_y_log10(labels = comma) +
   labs(title = "Distribution of population density by Census tract in four metro areas",
        y = "Population density (People/sq mi)",
        x = element_blank())
