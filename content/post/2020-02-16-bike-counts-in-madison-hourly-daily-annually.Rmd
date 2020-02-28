@@ -1,0 +1,69 @@
+---
+title: 'Bike Counts in Madison: Hourly, Daily, Annually'
+author: Harald Kliems
+date: '2020-02-16'
+slug: bike-counts-in-madison-hourly-daily-annually
+categories: []
+tags:
+  - bikes
+  - Madison
+  - R
+  - Eco-Counter
+draft: true
+---
+
+```{r message = FALSE}
+library(tidyverse)
+library(lubridate)
+
+cc_counts <- read_csv("https://opendata.arcgis.com/datasets/367cb53685c74628b4975d8f65d20748_0.csv", col_types = "ci-") %>% mutate(location = "Cap City at North Shore")
+
+sw_counts <- read_csv("https://opendata.arcgis.com/datasets/8860784eb30e4a45a6f853b5f81949f2_0.csv", col_types = "ci-") %>% mutate(location = "SW Path at Randall")
+
+counts <- bind_rows(cc_counts, sw_counts)
+
+counts2 <- counts %>% 
+  drop_na %>%
+  mutate(Count = as.integer(Count), location = as.factor(location)) %>%
+  mutate(Count_Date = mdy_hm(Count_Date, tz = "US/Central")) %>% #specifying the time zone will help when merging climate data later
+  mutate(dayofweek = wday(Count_Date, label = TRUE)) %>% #turning on labels makes this more intuitive
+  mutate(weekendind = ifelse(dayofweek %in% c("Sat", "Sun"), "weekend", "weekday"))
+
+counts3 <- counts2 %>% 
+  filter(location == "SW Path at Randall" | location == "Cap City at North Shore" & (Count_Date <= ymd_hms("2019-02-01 03:00:00", tz = "US/Central") | Count_Date >= ymd_hms("2019-03-12 00:00:00", tz = "US/Central"))) %>%  #remove long zero-count run
+  filter(location != "SW Path at Randall" | Count < 500) #remove SW counts over 500
+```
+```{r}
+counts3 %>% 
+  mutate(yr = year(Count_Date)) %>% 
+  filter(yr > 2015 & yr < 2020) %>% 
+  group_by(yr, location) %>% 
+  summarise(count_sum = sum(Count))   %>% 
+  ggplot(aes(yr, count_sum, fill = location)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  geom_text(aes(label = count_sum, group = location),
+            position = position_dodge(width = 1),
+    vjust = -0.5, size = 3) +
+  labs(title = "Bike counts have gone down year after year since 2016",
+       x = element_blank(),
+       y = "Bikes counted",
+       fill = "Counter location") +
+  theme(axis.line.y =  element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()
+)
+```
+
+```{r}
+counts3 %>% 
+  group_by(month = floor_date(Count_Date, "month"), location) %>% 
+  summarise(count_sum = sum(Count))   %>% 
+  ggplot(aes(month, count_sum, fill = location)) +
+  geom_col(position = "stack")
+```
+
+
+The bad news: Since 2016, at both locations counts have gone down year after year. This should be qualified a little:
+
