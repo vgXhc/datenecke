@@ -100,7 +100,7 @@ pop %>%
 
 pop %>% 
   group_by(metro) %>% 
-  fct_reorder(.metro, .pop_density, .fun = median) %>% 
+#  fct_reorder(.metro, .pop_density, .fun = median) %>% 
   ggplot(aes(metro, pop_density)) +
   geom_violin() +
   geom_boxplot(width = 0.1) +

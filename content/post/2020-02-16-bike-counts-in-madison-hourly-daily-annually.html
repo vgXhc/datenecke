@@ -1,0 +1,63 @@
+---
+title: 'Bike Counts in Madison: Hourly, Daily, Annually'
+author: Harald Kliems
+date: '2020-02-16'
+slug: bike-counts-in-madison-hourly-daily-annually
+categories: []
+tags:
+  - bikes
+  - Madison
+  - R
+  - Eco-Counter
+draft: true
+---
+
+
+
+<pre class="r"><code>library(tidyverse)
+library(lubridate)
+
+cc_counts &lt;- read_csv(&quot;https://opendata.arcgis.com/datasets/367cb53685c74628b4975d8f65d20748_0.csv&quot;, col_types = &quot;ci-&quot;) %&gt;% mutate(location = &quot;Cap City at North Shore&quot;)
+
+sw_counts &lt;- read_csv(&quot;https://opendata.arcgis.com/datasets/8860784eb30e4a45a6f853b5f81949f2_0.csv&quot;, col_types = &quot;ci-&quot;) %&gt;% mutate(location = &quot;SW Path at Randall&quot;)
+
+counts &lt;- bind_rows(cc_counts, sw_counts)
+
+counts2 &lt;- counts %&gt;% 
+  drop_na %&gt;%
+  mutate(Count = as.integer(Count), location = as.factor(location)) %&gt;%
+  mutate(Count_Date = mdy_hm(Count_Date, tz = &quot;US/Central&quot;)) %&gt;% #specifying the time zone will help when merging climate data later
+  mutate(dayofweek = wday(Count_Date, label = TRUE)) %&gt;% #turning on labels makes this more intuitive
+  mutate(weekendind = ifelse(dayofweek %in% c(&quot;Sat&quot;, &quot;Sun&quot;), &quot;weekend&quot;, &quot;weekday&quot;))
+
+counts3 &lt;- counts2 %&gt;% 
+  filter(location == &quot;SW Path at Randall&quot; | location == &quot;Cap City at North Shore&quot; &amp; (Count_Date &lt;= ymd_hms(&quot;2019-02-01 03:00:00&quot;, tz = &quot;US/Central&quot;) | Count_Date &gt;= ymd_hms(&quot;2019-03-12 00:00:00&quot;, tz = &quot;US/Central&quot;))) %&gt;%  #remove long zero-count run
+  filter(location != &quot;SW Path at Randall&quot; | Count &lt; 500) #remove SW counts over 500</code></pre>
+<pre class="r"><code>counts3 %&gt;% 
+  mutate(yr = year(Count_Date)) %&gt;% 
+  filter(yr &gt; 2015 &amp; yr &lt; 2020) %&gt;% 
+  group_by(yr, location) %&gt;% 
+  summarise(count_sum = sum(Count))   %&gt;% 
+  ggplot(aes(yr, count_sum, fill = location)) +
+  geom_bar(position = &quot;dodge&quot;, stat = &quot;identity&quot;) +
+  geom_text(aes(label = count_sum, group = location),
+            position = position_dodge(width = 1),
+    vjust = -0.5, size = 3) +
+  labs(title = &quot;Bike counts have gone down year after year since 2016&quot;,
+       x = element_blank(),
+       y = &quot;Bikes counted&quot;,
+       fill = &quot;Counter location&quot;) +
+  theme(axis.line.y =  element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()
+)</code></pre>
+<p><img src="/post/2020-02-16-bike-counts-in-madison-hourly-daily-annually_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<pre class="r"><code>counts3 %&gt;% 
+  group_by(month = floor_date(Count_Date, &quot;month&quot;), location) %&gt;% 
+  summarise(count_sum = sum(Count))   %&gt;% 
+  ggplot(aes(month, count_sum, fill = location)) +
+  geom_col(position = &quot;stack&quot;)</code></pre>
+<p><img src="/post/2020-02-16-bike-counts-in-madison-hourly-daily-annually_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>The bad news: Since 2016, at both locations counts have gone down year after year. This should be qualified a little:</p>

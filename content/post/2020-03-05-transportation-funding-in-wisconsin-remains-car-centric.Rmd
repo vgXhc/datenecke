@@ -1,0 +1,63 @@
+---
+title: Transportation funding in Wisconsin remains car centric
+author: ''
+date: '2020-03-05'
+tags:
+  - funding
+  - transportation
+  - Wisconsin
+slug: transportation-funding-in-wisconsin-remains-car-centric
+---
+
+
+Tony Evers, Wisconsin's Democratic governor, announced $75 million of funding for local transportation projects yesterday. The title of the program, "Multimodal Local Supplement Awards," may imply that the money supports projects that aren't just road repairs and highway expansions. But of course it's good to be skeptical and look at the actual project list. 
+
+The list is [available as a PDF document](https://wisconsindot.gov/Documents/doing-bus/local-gov/astnce-pgms/aid/mls-awards.pdf) and so the first step is to use Acrobat to convert it into an Excel sheet. (If there is an R package to directly read in PDFs, let me know.). The resulting XLSX file comes out pretty clean and doesn't need much prep after reading it in with `readxl`.
+
+```{r}
+library(tidyverse)
+library(readxl)
+c <- c("county", "sponsor", "name", "modal_type", "amount") #column names
+mls <- read_excel("mls-awards.xlsx", 
+                  skip = 2, 
+                  col_names = c) %>% 
+  drop_na %>% #drop one line that only has the WisDOT logo in it
+  mutate(modal_type = as.factor(modal_type))
+
+```
+
+One thing that needs to be fixed are some of the factors of the `modal_type` variable. I'll combine all projects that don't include anything related to pedestrians and bikes into one factor and all multimodal projects that do include a ped/bike component into a second factor; all other factors are kept as is. The `fct_collapse` function from the `forcats` package is great for this:
+
+```{r}
+mls2 <- mls %>% 
+  mutate(modal_type = fct_collapse(modal_type, 
+             "Roads and Bridges,\n no bike/ped"= c("Bridge", "Road", "Multimodal: Road,\r\nBridge", "Multimodal: Road,\r\nHarbor"),
+             "Multimodal with bike/ped" = c("Multimodal: Road,\r\nBike/Ped", 
+                                "Multimodal: Road,\r\nBridge, Bike/Ped", 
+                                "Multimodal: Road,\r\nBike/Ped, Railroad",
+                                "Multimodal: Road,\r\nBike/Ped, Transit")))
+
+
+```
+Now all that remains is to create summary measures by `modal_type`:
+
+```{r}
+mls3 <- mls2 %>% 
+  group_by(modal_type) %>% 
+  summarise(total = sum(amount), perc = total/sum(mls2$amount)* 100)
+```
+
+For plotting it's a good idea to reorder the bars by total amount with `fct_reorder`. And here's the final product:
+```{r}
+
+mls3 %>%
+  mutate(modal_type = fct_reorder(mls3$modal_type, total, .desc = TRUE),
+         total = total/1000000) %>% 
+  ggplot(aes(modal_type, total)) +
+  geom_col() +
+  labs(title = "Governor Evers awarded $75 million in funding for local transportation projects",
+       subtitle = "The vast majority are pure road projects") +
+  scale_y_continuous(name = "Total amount (million $)") +
+  scale_x_discrete(name = element_blank())
+
+```

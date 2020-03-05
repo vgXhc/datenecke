@@ -1,0 +1,131 @@
+---
+title: Distribution of Population Density in Madison Metro Area
+author: Harald Kliems
+date: '2020-02-12'
+slug: distribution-of-population-density-in-madison-metro-area
+categories: []
+tags:
+  - ACS
+  - landuse
+  - R
+  - tidycensus
+  - StreetLight
+draft: true
+---
+
+
+
+<pre class="r"><code>## Libraries
+library(sf)</code></pre>
+<pre><code>## Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3</code></pre>
+<pre class="r"><code>library(tidycensus)
+library(tidyverse)</code></pre>
+<pre><code>## -- Attaching packages -------------------------------------------------------------------------------- tidyverse 1.2.1 --</code></pre>
+<pre><code>## v ggplot2 3.2.1     v purrr   0.3.3
+## v tibble  2.1.3     v dplyr   0.8.3
+## v tidyr   1.0.0     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.4.0</code></pre>
+<pre><code>## -- Conflicts ----------------------------------------------------------------------------------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(ggplot2)</code></pre>
+<pre class="r"><code>madison_pop &lt;- get_acs(geography = &quot;tract&quot;, 
+                     variables = &quot;B01003_001&quot;, 
+                     state = &quot;WI&quot;,
+                     county = c(&quot;Dane&quot;, &quot;Columbia&quot;, &quot;Green County&quot;, &quot;Iowa&quot;),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %&gt;% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %&gt;% 
+  st_drop_geometry()</code></pre>
+<pre><code>## Getting data from the 2013-2017 5-year ACS</code></pre>
+<pre><code>## Downloading feature geometry from the Census website.  To cache shapefiles for use in future sessions, set `options(tigris_use_cache = TRUE)`.</code></pre>
+<pre class="r"><code>sf_pop &lt;- get_acs(geography = &quot;tract&quot;, 
+                     variables = &quot;B01003_001&quot;, 
+                     state = &quot;CA&quot;,
+                     county = c(&quot;Alameda&quot;, &quot;Contra Costa&quot;, &quot;San Francisco&quot;, &quot;San Mateo&quot;, &quot;Marin&quot;),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %&gt;% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %&gt;% 
+  st_drop_geometry()</code></pre>
+<pre><code>## Getting data from the 2013-2017 5-year ACS
+## Downloading feature geometry from the Census website.  To cache shapefiles for use in future sessions, set `options(tigris_use_cache = TRUE)`.</code></pre>
+<pre class="r"><code>mke_pop &lt;- get_acs(geography = &quot;tract&quot;, 
+                     variables = &quot;B01003_001&quot;, 
+                     state = &quot;WI&quot;,
+                     county = c(&quot;Milwaukee&quot;, &quot;Waukesha&quot;, &quot;Washington&quot;, &quot;Ozaukee&quot;),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %&gt;% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %&gt;% 
+  st_drop_geometry()</code></pre>
+<pre><code>## Getting data from the 2013-2017 5-year ACS
+## Downloading feature geometry from the Census website.  To cache shapefiles for use in future sessions, set `options(tigris_use_cache = TRUE)`.</code></pre>
+<pre class="r"><code>dal_pop &lt;- get_acs(geography = &quot;tract&quot;, 
+                     variables = &quot;B01003_001&quot;, 
+                     state = &quot;TX&quot;,
+                     county = c(&quot;Dallas&quot;,
+                                &quot;Tarrant&quot;,
+                                &quot;Collin County&quot;,
+                                &quot;Denton&quot;,
+                                &quot;Ellis&quot;,
+                                &quot;Johnson&quot;,
+                                &quot;Parker&quot;,
+                                &quot;Kaufman&quot;,
+                                &quot;Rockwall&quot;,
+                                &quot;Hunt&quot;,
+                                &quot;Wise&quot;,
+                                &quot;Hood&quot;,
+                                &quot;Somervell&quot;),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %&gt;% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %&gt;% 
+  st_drop_geometry()</code></pre>
+<pre><code>## Getting data from the 2013-2017 5-year ACS
+## Downloading feature geometry from the Census website.  To cache shapefiles for use in future sessions, set `options(tigris_use_cache = TRUE)`.</code></pre>
+<pre class="r"><code>phx_pop &lt;- get_acs(geography = &quot;tract&quot;, 
+                     variables = &quot;B01003_001&quot;, 
+                     state = &quot;AZ&quot;,
+                     county = c(&quot;Maricopa&quot;, &quot;Pinal&quot;),
+                     geometry = TRUE,
+                     keep_geo_vars = TRUE) %&gt;% 
+  mutate(pop_density = estimate / (ALAND /27878400)) %&gt;% 
+  st_drop_geometry()</code></pre>
+<pre><code>## Getting data from the 2013-2017 5-year ACS
+## Downloading feature geometry from the Census website.  To cache shapefiles for use in future sessions, set `options(tigris_use_cache = TRUE)`.</code></pre>
+<pre class="r"><code>pop &lt;- bind_rows(&quot;Madison&quot; = madison_pop, 
+                 &quot;San Francisco&quot; = sf_pop, 
+                 &quot;Milwaukee&quot; = mke_pop, 
+                 &quot;Phoenix&quot; = phx_pop,
+                 &quot;Dallas&quot; = dal_pop,
+                 .id = &quot;metro&quot;) %&gt;% 
+  drop_na</code></pre>
+<pre class="r"><code>library(scales)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;scales&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:purrr&#39;:
+## 
+##     discard</code></pre>
+<pre><code>## The following object is masked from &#39;package:readr&#39;:
+## 
+##     col_factor</code></pre>
+<pre class="r"><code>pop %&gt;% 
+  ggplot(aes(pop_density, color = metro)) +
+  geom_density(adjust = 1/2) +
+  scale_x_log10()</code></pre>
+<pre><code>## Warning: Transformation introduced infinite values in continuous x-axis</code></pre>
+<pre><code>## Warning: Removed 9 rows containing non-finite values (stat_density).</code></pre>
+<p><img src="/post/2020-02-12-distribution-of-population-density-in-madison-metro-area_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>pop %&gt;% 
+  group_by(metro) %&gt;% 
+#  fct_reorder(.metro, .pop_density, .fun = median) %&gt;% 
+  ggplot(aes(metro, pop_density)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  scale_y_log10(labels = comma) +
+  labs(title = &quot;Distribution of population density by Census tract in four metro areas&quot;,
+       y = &quot;Population density (People/sq mi)&quot;,
+       x = element_blank())</code></pre>
+<pre><code>## Warning: Transformation introduced infinite values in continuous y-axis</code></pre>
+<pre><code>## Warning: Transformation introduced infinite values in continuous y-axis</code></pre>
+<pre><code>## Warning: Removed 9 rows containing non-finite values (stat_ydensity).</code></pre>
+<pre><code>## Warning: Removed 9 rows containing non-finite values (stat_boxplot).</code></pre>
+<p><img src="/post/2020-02-12-distribution-of-population-density-in-madison-metro-area_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
