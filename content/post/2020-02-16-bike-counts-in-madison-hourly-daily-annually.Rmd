@@ -11,6 +11,8 @@ tags:
   - Eco-Counter
 draft: true
 ---
+In the previous post I described how I checked the quality of data of Madison's bike counters and cleaned it up. Now I can proceed to more interesting things: What are the counts, year after year, day after day, hour after hour? Are there interesting patterns? And what can they tell us about the overall state of biking in Madison?
+
 
 ```{r message = FALSE}
 library(tidyverse)
@@ -33,6 +35,11 @@ counts3 <- counts2 %>%
   filter(location == "SW Path at Randall" | location == "Cap City at North Shore" & (Count_Date <= ymd_hms("2019-02-01 03:00:00", tz = "US/Central") | Count_Date >= ymd_hms("2019-03-12 00:00:00", tz = "US/Central"))) %>%  #remove long zero-count run
   filter(location != "SW Path at Randall" | Count < 500) #remove SW counts over 500
 ```
+
+# Annual bike counts are declining
+
+The first years for which we have a year's worth of counts from both counters is 2016. How have annual counts changed since then? The bad news: At both locations counts have gone down year after year. We almost reached 1 million counts in 2016---971,964 to be exact---, but in 2019 counts were down to 835,352, decline of `r (1-971964/835352)*100` percent.  This decline affected both count locations:
+
 ```{r}
 counts3 %>% 
   mutate(yr = year(Count_Date)) %>% 
@@ -65,5 +72,15 @@ counts3 %>%
 ```
 
 
-The bad news: Since 2016, at both locations counts have gone down year after year. This should be qualified a little:
+```{r}
+counts3 %>% 
+  filter(weekendind == "weekday" & month(Count_Date) == 6) %>% 
+  group_by(hour(Count_Date)) %>% 
+  ggplot(aes(hour(Count_Date), Count)) +
+  geom_col() +
+  facet_wrap(~ location)
+```
+
+
+
 
