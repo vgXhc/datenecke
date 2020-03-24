@@ -36,8 +36,9 @@ library(tidyverse)</code></pre>
 ## x dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>sheets_deauth()
 
-df &lt;- read_sheet(&quot;https://docs.google.com/spreadsheets/d/1Q5VDTWiWR8w0KzPawEy9-i0hmzRAP0uOu_liNztybkk/edit#gid=1069622854&quot;)</code></pre>
-<pre><code>## Reading from &#39;Copy of Bike Shops on 2020 state map- COVID 19 version&#39;</code></pre>
+
+df &lt;- read_sheet(&quot;https://docs.google.com/spreadsheets/d/1TaghQIUjMTDf1R33BtGtUAwIYjfeoHTUf7wJjMg0O6M/edit?ts=5e790c29#gid=1069622854&quot;)</code></pre>
+<pre><code>## Reading from &#39;Bike Shops on 2020 state map- COVID 19 version&#39;</code></pre>
 <pre><code>## </code></pre>
 <pre class="r"><code>shops &lt;- df %&gt;% 
   rename(name = `Shop Name`) %&gt;% 
