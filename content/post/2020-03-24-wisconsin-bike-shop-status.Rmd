@@ -1,0 +1,35 @@
+---
+title: Wisconsin bike shop status
+author: Harald Kliems
+date: '2020-03-24'
+tags:
+  - COVID19
+  - bikes
+  - Wisconsin
+slug: wisconsin-bike-shop-status
+---
+
+Quick and dirty web map for the current operating status of Wisconsin Bike Shops. Not for production use! 
+
+```{r}
+library(leaflet)
+library(googlesheets4)
+library(tidyverse)
+
+df <- read_sheet("https://docs.google.com/spreadsheets/d/1TaghQIUjMTDf1R33BtGtUAwIYjfeoHTUf7wJjMg0O6M/edit?ts=5e790c29#gid=1069622854")
+
+shops <- df %>% 
+  rename(name = `Shop Name`) %>% 
+  mutate(Status = replace_na(Status, "unknown")) %>% 
+  mutate(pop = paste0("<b>",name, "</b><br>",
+                      "Phone: ", Phone, "<br>",
+                      "Website: ", Website, "<br>",
+                      "Operating Status: ", Status))
+
+
+shops %>% 
+  leaflet() %>% 
+  addProviderTiles(provider = "Stamen.TonerLite") %>%
+  addMarkers(lng = ~Long, lat = ~Lat, popup = ~pop)
+```
+
