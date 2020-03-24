@@ -16,9 +16,13 @@ library(leaflet)
 library(googlesheets4)
 library(tidyverse)
 
+<<<<<<< HEAD
 sheets_deauth()
 
 df <- read_sheet("https://docs.google.com/spreadsheets/d/1Q5VDTWiWR8w0KzPawEy9-i0hmzRAP0uOu_liNztybkk/edit#gid=1069622854")
+=======
+df <- read_sheet("https://docs.google.com/spreadsheets/d/1TaghQIUjMTDf1R33BtGtUAwIYjfeoHTUf7wJjMg0O6M/edit?ts=5e790c29#gid=1069622854")
+>>>>>>> a4246dedbda9b6884642ba056b120044deb3d51b
 
 shops <- df %>% 
   rename(name = `Shop Name`) %>% 

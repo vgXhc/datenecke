@@ -1,30 +1,46 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/tags/funding/</loc>
-    <lastmod>2020-03-05T00:00:00+00:00</lastmod>
+    <loc>/tags/covid19/</loc>
+    <lastmod>2020-03-24T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/</loc>
-    <lastmod>2020-03-05T00:00:00+00:00</lastmod>
+    <lastmod>2020-03-24T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/post/</loc>
-    <lastmod>2020-03-05T00:00:00+00:00</lastmod>
+    <lastmod>2020-03-24T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/</loc>
-    <lastmod>2020-03-05T00:00:00+00:00</lastmod>
+    <lastmod>2020-03-24T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/transportation/</loc>
-    <lastmod>2020-03-05T00:00:00+00:00</lastmod>
+    <loc>/tags/wisconsin/</loc>
+    <lastmod>2020-03-24T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/2020/03/24/wisconsin-bike-shop-status/</loc>
+    <lastmod>2020-03-24T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/bikes/</loc>
+    <lastmod>2020-03-24T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
@@ -33,8 +49,15 @@
   </url>
   
   <url>
-    <loc>/tags/wisconsin/</loc>
+    <loc>/tags/funding/</loc>
     <lastmod>2020-03-05T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/transportation/</loc>
+    <lastmod>2020-03-05T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
@@ -43,28 +66,27 @@
   </url>
   
   <url>
-    <loc>/tags/bikes/</loc>
-    <lastmod>2020-02-16T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>/tags/eco-counter/</loc>
     <lastmod>2020-02-16T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/madison/</loc>
     <lastmod>2020-02-16T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/r/</loc>
     <lastmod>2020-02-16T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/acs/</loc>
     <lastmod>2020-02-12T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
@@ -73,23 +95,27 @@
   </url>
   
   <url>
-    <loc>/tags/landuse/</loc>
+    <loc>/tags/streetlight/</loc>
     <lastmod>2020-02-12T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/streetlight/</loc>
+    <loc>/tags/landuse/</loc>
     <lastmod>2020-02-12T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/tidycensus/</loc>
     <lastmod>2020-02-12T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/google-street-view/</loc>
     <lastmod>2020-02-06T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
@@ -98,13 +124,14 @@
   </url>
   
   <url>
-    <loc>/tags/leaflet/</loc>
+    <loc>/2020/01/29/where-is-the-high-density-in-madison/</loc>
     <lastmod>2020-01-29T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>/2020/01/29/where-is-the-high-density-in-madison/</loc>
+    <loc>/tags/leaflet/</loc>
     <lastmod>2020-01-29T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
@@ -120,6 +147,7 @@
   <url>
     <loc>/tags/zoning/</loc>
     <lastmod>2019-06-25T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
@@ -129,6 +157,7 @@
   
   <url>
     <loc>/categories/</loc>
+    <priority>0</priority>
   </url>
   
 </urlset>

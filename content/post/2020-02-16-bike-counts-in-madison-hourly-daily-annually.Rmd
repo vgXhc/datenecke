@@ -38,7 +38,7 @@ counts3 <- counts2 %>%
 
 # Annual bike counts are declining
 
-The first years for which we have a year's worth of counts from both counters is 2016. How have annual counts changed since then? The bad news: At both locations counts have gone down year after year. We almost reached 1 million counts in 2016---971,964 to be exact---, but in 2019 counts were down to 835,352, decline of `r (1-971964/835352)*100` percent.  This decline affected both count locations:
+The first years for which we have a year's worth of counts from both counters is 2016. How have annual counts changed since then? The bad news: At both locations counts have gone down year after year. We almost reached 1 million counts in 2016---971,964 to be exact---, but in 2019 counts were down to 835,352, a decline of `r round((1-971964/835352)*100,1)` percent.  This decline affected both counters:
 
 ```{r}
 counts3 %>% 
@@ -62,6 +62,30 @@ counts3 %>%
         panel.grid.minor.x = element_blank()
 )
 ```
+
+Eyeballing it, this looks like a linear decline, with the exception of 2018, which saw a sharper decline and for the counter on the SW actually was the all-time low. This maybe shouldn't be a surprise: 2018 was the year of the flood, which closed many bike paths for several weeks. To confirm this, we can look at the month before and after the flood for the years:
+
+```{r}
+# this works, but currently only for 2018. Have to make this independent
+# of the year still
+fld <- ymd_hms("08-20 12:00:00")
+
+before_flood <- interval(start = fld - months(1), end = fld - days(1))
+after_flood <- interval(start = fld + days(1), end = fld + months(1))
+
+counts3 %>% 
+  mutate(fld_ind = case_when(Count_Date %within% before_flood ~ "before",
+                             Count_Date %within% after_flood ~ "after"),
+         yr = year(Count_Date)) %>% 
+  filter(!is.na(fld_ind)) %>% 
+  group_by(fld_ind, yr) %>% 
+  summarise(count_sum = sum(Count))
+
+
+
+
+```
+
 
 ```{r}
 counts3 %>% 
